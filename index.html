@@ -1,0 +1,3093 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>1894 녹두꽃의 진군: 동학농민운동 8비트 아케이드</title>
+  <!-- Tailwind CSS 로드 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 한글 8비트 비트맵 픽셀 폰트 DungGeunMo & Galmuri9 로드 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@latest/dist/galmuri.css" />
+  <style>
+    @font-face {
+      font-family: 'DungGeunMo';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      --bg-cabinet: #0e1118;
+      --panel-dark: #181d29;
+      --hanji: #f4ecdc;
+      --hanji-shade: #dfcfa9;
+      --ink: #12151e;
+      --mung-green: #9ec83b;
+      --mung-gold: #e8c547;
+      --crimson: #d9383a;
+      --ochre: #b86f32;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-cabinet);
+      background-image:
+        radial-gradient(circle at 50% 18%, #232a3d 0%, #0b0d13 100%);
+      color: var(--hanji);
+      font-family: 'DungGeunMo', 'Galmuri9', monospace;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+
+    /* 픽셀 캔버스 선명도 유지 */
+    canvas {
+      image-rendering: -moz-crisp-edges;
+      image-rendering: -webkit-crisp-edges;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      touch-action: none;
+    }
+
+    /* CRT 아케이드 캐비닛 베젤 */
+    .crt-cabinet {
+      background: linear-gradient(180deg, #252b3b 0%, #151924 100%);
+      border: 4px solid #07090d;
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.14),
+        0 14px 34px rgba(0, 0, 0, 0.75);
+    }
+
+    /* 미세한 CRT 스캔라인 질감 (시인성을 해치지 않는 연한 농도) */
+    .crt-scanlines {
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0) 0px,
+        rgba(255, 255, 255, 0) 2px,
+        rgba(0, 0, 0, 0.11) 3px,
+        rgba(0, 0, 0, 0.11) 4px
+      );
+      pointer-events: none;
+    }
+
+    /* 전통 한지 & 먹선 픽셀 패널 */
+    .pixel-panel {
+      background-color: var(--hanji);
+      color: var(--ink);
+      border: 3px solid var(--ink);
+      box-shadow:
+        inset -3px -3px 0px var(--hanji-shade),
+        inset 3px 3px 0px #fffdf7,
+        0 5px 0px #080a0f;
+    }
+
+    /* 어두운 밤먹빛 슬레이트 픽셀 패널 */
+    .pixel-panel-dark {
+      background-color: var(--panel-dark);
+      color: var(--hanji);
+      border: 3px solid #080a0f;
+      box-shadow:
+        inset -3px -3px 0px #10141f,
+        inset 3px 3px 0px #2b3347,
+        0 5px 0px #06080c;
+    }
+
+    /* 8비트 아케이드 버튼 */
+    .pixel-btn {
+      font-family: 'DungGeunMo', 'Galmuri9', monospace;
+      border: 3px solid #080a0f;
+      box-shadow:
+        inset -3px -3px 0px rgba(0, 0, 0, 0.3),
+        inset 3px 3px 0px rgba(255, 255, 255, 0.25),
+        0 4px 0px #080a0f;
+      transition: transform 0.05s ease, filter 0.1s ease;
+      cursor: pointer;
+    }
+
+    .pixel-btn:hover {
+      filter: brightness(1.08);
+    }
+
+    .pixel-btn:active {
+      transform: translateY(3px);
+      box-shadow:
+        inset 2px 2px 0px rgba(0, 0, 0, 0.35),
+        0 1px 0px #080a0f;
+    }
+
+    .btn-crimson {
+      background-color: var(--crimson);
+      color: #fff9f0;
+    }
+
+    .btn-gold {
+      background-color: var(--mung-gold);
+      color: #161821;
+    }
+
+    .btn-hanji {
+      background-color: var(--hanji);
+      color: var(--ink);
+    }
+
+    /* 난이도 선택 버튼 스타일 */
+    .diff-btn {
+      font-family: 'DungGeunMo', 'Galmuri9', monospace;
+      border: 2px solid #080a0f;
+      box-shadow: 0 3px 0px #080a0f;
+      transition: all 0.08s ease;
+      cursor: pointer;
+    }
+
+    .diff-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0px #080a0f;
+    }
+
+    .diff-btn.active-easy {
+      background-color: #6ea32b;
+      color: #ffffff;
+      outline: 2px solid #b8e858;
+    }
+    .diff-btn.active-normal {
+      background-color: #e8c547;
+      color: #12151e;
+      outline: 2px solid #fff3b0;
+    }
+    .diff-btn.active-hard {
+      background-color: #e06d24;
+      color: #ffffff;
+      outline: 2px solid #ffb07c;
+    }
+    .diff-btn.active-impossible {
+      background-color: #c92228;
+      color: #ffffff;
+      outline: 2px solid #ff6b70;
+      animation: pulseCrimson 1.2s infinite;
+    }
+
+    @keyframes pulseCrimson {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(217, 56, 58, 0.7), 0 3px 0px #080a0f; }
+      50% { box-shadow: 0 0 10px 2px rgba(255, 77, 79, 0.85), 0 3px 0px #080a0f; }
+    }
+
+    /* 스크롤바 커스텀 */
+    .pixel-scroll::-webkit-scrollbar {
+      width: 7px;
+    }
+    .pixel-scroll::-webkit-scrollbar-track {
+      background: var(--hanji-shade);
+    }
+    .pixel-scroll::-webkit-scrollbar-thumb {
+      background: var(--ochre);
+      border: 2px solid var(--ink);
+    }
+  </style>
+</head>
+<body class="p-2 sm:p-3">
+
+  <!-- 전체 레트로 아케이드 캐비닛 래퍼 -->
+  <div class="crt-cabinet rounded-xl p-2 sm:p-3 w-full max-w-4xl flex flex-col gap-2">
+
+    <!-- 상단 HUD 상태 표시줄 -->
+    <header class="pixel-panel-dark rounded-lg px-2.5 sm:px-3.5 py-1.5 sm:py-2 flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+      <div class="flex items-center gap-1.5 sm:gap-2.5">
+        <span class="px-2 py-0.5 bg-[#9ec83b] text-[#12151e] font-bold border-2 border-[#080a0f] rounded text-[11px] sm:text-xs">
+          1894 남도역사
+        </span>
+        <span id="hudStageName" class="text-[#e8c547] font-bold tracking-wide">
+          녹두꽃의 진군
+        </span>
+        <!-- 활성 난이도 배지 -->
+        <span id="hudDiffBadge" class="px-2 py-0.5 bg-[#e8c547] text-[#12151e] font-bold border-2 border-[#080a0f] rounded text-[11px] sm:text-xs">
+          난이도: 보통
+        </span>
+      </div>
+
+      <!-- 농민군 사기(체력 ♥) & 공훈 점수 -->
+      <div class="flex items-center gap-3 sm:gap-4">
+        <div id="hudHeartsWrap" class="hidden flex items-center gap-1" title="농민군 사기(체력)">
+          <span class="text-[#b8c2d6] hidden sm:inline">사기:</span>
+          <span id="hudHearts" class="text-[#ff4d4f] tracking-widest text-sm sm:text-base">♥♥♥</span>
+        </div>
+        <div id="hudScoreWrap" class="hidden flex items-center gap-1">
+          <span class="text-[#b8c2d6]">공훈:</span>
+          <span id="hudScore" class="text-[#9ec83b] font-bold">0000</span>
+        </div>
+      </div>
+
+      <!-- 우측 유틸리티 버튼 -->
+      <div class="flex items-center gap-1.5">
+        <button id="btnStageMenuTop" type="button" class="pixel-btn btn-hanji rounded px-2 py-1 text-[11px] sm:text-xs font-bold">
+          전투목록
+        </button>
+        <button id="btnMute" type="button" class="pixel-btn btn-gold rounded px-2 py-1 text-[11px] sm:text-xs font-bold">
+          🔊 소리켬
+        </button>
+      </div>
+    </header>
+
+    <!-- 메인 800x520 픽셀 아트 캔버스 모니터 (모든 전투 및 하단 조작 버튼이 캔버스 내부에 포함됨) -->
+    <div class="relative w-full aspect-[800/520] bg-[#0b0e14] border-4 border-[#07090d] rounded-lg shadow-2xl overflow-hidden">
+      <canvas id="gameCanvas" width="800" height="520" class="w-full h-full block"></canvas>
+
+      <!-- CRT 스캔라인 오버레이 -->
+      <div class="crt-scanlines absolute inset-0"></div>
+
+      <!-- 1. 타이틀 오버레이 화면 -->
+      <div id="overlayTitle" class="absolute inset-0 flex flex-col items-center justify-between p-2.5 sm:p-5 bg-gradient-to-b from-black/55 via-black/25 to-black/75 z-10">
+        <div class="text-center mt-0.5 sm:mt-2">
+          <div class="inline-block px-2.5 py-0.5 mb-1.5 bg-[#191e2b]/90 border-2 border-[#9ec83b] text-[#9ec83b] rounded text-[11px] sm:text-xs">
+            전라·남도 역사 콘텐츠 · 8비트 레트로 아케이드
+          </div>
+          <h1 class="text-2xl sm:text-4xl md:text-5xl text-[#fff9f0] drop-shadow-[0_4px_0_#0d1017] tracking-wider font-bold">
+            1894 녹두꽃의 진군
+          </h1>
+          <p class="text-xs sm:text-sm md:text-base text-[#f4ecdc] mt-1 drop-shadow-[0_2px_0_#0d1017]">
+            보국안민의 깃발 아래, 동학농민운동 4대 전투를 돌파하라!
+          </p>
+        </div>
+
+        <!-- 타이틀 중앙: 4단계 난이도 선택 패널 -->
+        <div class="w-full max-w-lg pixel-panel-dark rounded-lg p-2.5 sm:p-3 bg-[#141824]/95">
+          <div class="flex items-center justify-between mb-1.5 text-[11px] sm:text-xs">
+            <span class="text-[#9ec83b] font-bold">⚔️ 전장 난이도 선택</span>
+            <span id="titleDiffSpec" class="text-[#e8c547]">표준 밸런스 · 사기 3♥</span>
+          </div>
+          <div id="titleDiffSelector" class="grid grid-cols-4 gap-1.5 sm:gap-2">
+            <button type="button" data-diff="easy" class="diff-btn bg-[#252c3d] text-[#d0d7e6] rounded py-1.5 sm:py-2 text-xs sm:text-sm font-bold">
+              쉬움
+            </button>
+            <button type="button" data-diff="normal" class="diff-btn active-normal rounded py-1.5 sm:py-2 text-xs sm:text-sm font-bold">
+              보통
+            </button>
+            <button type="button" data-diff="hard" class="diff-btn bg-[#252c3d] text-[#d0d7e6] rounded py-1.5 sm:py-2 text-xs sm:text-sm font-bold">
+              어려움
+            </button>
+            <button type="button" data-diff="impossible" class="diff-btn bg-[#252c3d] text-[#ff7875] rounded py-1.5 sm:py-2 text-xs sm:text-sm font-bold">
+              불가능
+            </button>
+          </div>
+          <!-- 난이도 안내 및 불가능 경고 배지 -->
+          <div id="titleDiffWarning" class="mt-1.5 text-center text-[11px] sm:text-xs text-[#d0d7e6] py-0.5 px-2 rounded bg-[#0d1017]/80">
+            균형 잡힌 정통 아케이드 난이도입니다.
+          </div>
+        </div>
+
+        <!-- 타이틀 하단 출정 메뉴 -->
+        <div class="w-full max-w-lg flex flex-col gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
+          <button id="btnStartCampaign" type="button" class="pixel-btn btn-crimson rounded-lg py-2 sm:py-2.5 px-4 text-sm sm:text-lg font-bold tracking-wider w-full">
+            ▶ 출정하기 (1단계부터 시작)
+          </button>
+          <div class="grid grid-cols-2 gap-1.5 sm:gap-2">
+            <button id="btnOpenStageSelect" type="button" class="pixel-btn btn-gold rounded-lg py-1.5 sm:py-2 px-3 text-xs sm:text-sm font-bold">
+              ⚔️ 전투 선택 (시연용)
+            </button>
+            <button id="btnOpenCodex" type="button" class="pixel-btn btn-hanji rounded-lg py-1.5 sm:py-2 px-3 text-xs sm:text-sm font-bold">
+              📜 역사 사료 도감
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 전투 선택 모달 (시연 및 난이도별 즉시 테스트용) -->
+      <div id="overlayStageSelect" class="hidden absolute inset-0 bg-black/85 flex items-center justify-center p-2.5 sm:p-4 z-20">
+        <div class="pixel-panel rounded-lg w-full max-w-2xl max-h-full flex flex-col p-3 sm:p-4">
+          <div class="flex items-center justify-between border-b-2 border-[#12151e] pb-2 mb-2">
+            <h2 class="text-base sm:text-xl font-bold text-[#12151e]">⚔️ 동학농민운동 4대 전투 선택</h2>
+            <button id="btnCloseStageSelect" type="button" class="pixel-btn btn-crimson rounded px-2.5 py-1 text-xs">닫기 ✕</button>
+          </div>
+
+          <!-- 모달 내 난이도 즉시 변경 바 -->
+          <div class="bg-[#191e2b] text-[#f4ecdc] rounded p-2 mb-2.5 flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs text-[#9ec83b] font-bold">난이도 설정:</span>
+            <div id="modalDiffSelector" class="grid grid-cols-4 gap-1.5 flex-1 max-w-sm">
+              <button type="button" data-diff="easy" class="diff-btn bg-[#252c3d] text-[#d0d7e6] rounded py-1 text-xs font-bold">쉬움</button>
+              <button type="button" data-diff="normal" class="diff-btn active-normal rounded py-1 text-xs font-bold">보통</button>
+              <button type="button" data-diff="hard" class="diff-btn bg-[#252c3d] text-[#d0d7e6] rounded py-1 text-xs font-bold">어려움</button>
+              <button type="button" data-diff="impossible" class="diff-btn bg-[#252c3d] text-[#ff7875] rounded py-1 text-xs font-bold">불가능</button>
+            </div>
+          </div>
+
+          <div id="stageSelectGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto pixel-scroll pr-1">
+            <!-- JS에서 4개 스테이지 카드 생성 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 역사 사료 도감 모달 -->
+      <div id="overlayCodex" class="hidden absolute inset-0 bg-black/85 flex items-center justify-center p-2.5 sm:p-4 z-20">
+        <div class="pixel-panel rounded-lg w-full max-w-2xl max-h-full flex flex-col p-3 sm:p-4">
+          <div class="flex items-center justify-between border-b-2 border-[#12151e] pb-2 mb-2.5">
+            <h2 class="text-base sm:text-xl font-bold text-[#12151e]">📜 남도 동학농민운동 핵심 사료 도감</h2>
+            <button id="btnCloseCodex" type="button" class="pixel-btn btn-crimson rounded px-2.5 py-1 text-xs">닫기 ✕</button>
+          </div>
+          <div id="codexList" class="space-y-2 overflow-y-auto pixel-scroll pr-1 text-xs sm:text-sm leading-relaxed">
+            <!-- JS에서 사료 데이터 렌더링 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. 스테이지 클리어 & 역사 사료 카드 팝업 -->
+      <div id="overlayStageClear" class="hidden absolute inset-0 bg-black/85 flex items-center justify-center p-2.5 sm:p-4 z-20">
+        <div class="pixel-panel rounded-lg w-full max-w-xl max-h-full overflow-y-auto pixel-scroll p-3.5 sm:p-5 flex flex-col justify-between gap-2.5">
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-1.5 mb-2">
+              <div class="flex items-center gap-1.5">
+                <span id="clearStageTag" class="px-2 py-0.5 bg-[#6ea32b] text-white border-2 border-[#12151e] rounded text-xs font-bold">
+                  제1전투 승리!
+                </span>
+                <span id="clearDiffBadge" class="px-2 py-0.5 bg-[#e8c547] text-[#12151e] border-2 border-[#12151e] rounded text-xs font-bold">
+                  난이도: 보통
+                </span>
+              </div>
+              <span id="clearStageMeta" class="text-xs font-bold text-[#b86f32]">
+                1894년 1월~3월 · 전북 고부·백산
+              </span>
+            </div>
+            <h2 id="clearStageTitle" class="text-lg sm:text-2xl font-bold text-[#12151e] border-b-2 border-[#12151e] pb-1.5 mb-2.5">
+              고부 봉기와 백산의 죽창 함성
+            </h2>
+            <div class="bg-[#fffdf7] border-2 border-[#12151e] rounded p-2.5 sm:p-3 text-xs sm:text-sm leading-relaxed text-[#12151e]">
+              <div class="font-bold text-[#d9383a] mb-1">📖 역사 사료 노트</div>
+              <p id="clearHistoryDesc"></p>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t-2 border-[#d1bfa3]">
+            <div class="text-xs sm:text-sm font-bold text-[#12151e]">
+              누적 공훈 점수: <span id="clearScoreText" class="text-[#d9383a] text-base sm:text-lg">0</span>점
+            </div>
+            <button id="btnNextStage" type="button" class="pixel-btn btn-crimson rounded-lg px-4 py-2 text-xs sm:text-sm font-bold w-full sm:w-auto">
+              다음 전투로 출정 ▶
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. 패배(전열 재정비) 오버레이 + 즉시 난이도 변경 -->
+      <div id="overlayGameOver" class="hidden absolute inset-0 bg-black/85 flex items-center justify-center p-3 z-20">
+        <div class="pixel-panel rounded-lg w-full max-w-md p-4 sm:p-5 text-center flex flex-col gap-2.5">
+          <div class="text-2xl sm:text-3xl">🔥</div>
+          <h2 class="text-lg sm:text-2xl font-bold text-[#d9383a]">전열이 흐트러졌습니다!</h2>
+          <p id="gameOverReason" class="text-xs sm:text-sm text-[#12151e] leading-relaxed">
+            관군의 화력이 거세지만 농민군의 뜻은 꺾이지 않습니다. 전술을 가다듬어 다시 돌파하십시오!
+          </p>
+
+          <!-- 패배 화면에서 바로 난이도 조정 후 재도전 -->
+          <div class="bg-[#191e2b] text-[#f4ecdc] rounded p-2 mt-0.5">
+            <div class="text-[11px] text-[#9ec83b] mb-1 font-bold">난이도 변경 후 즉시 재도전</div>
+            <div id="gameOverDiffSelector" class="grid grid-cols-4 gap-1.5">
+              <button type="button" data-diff="easy" class="diff-btn bg-[#252c3d] text-[#d0d7e6] rounded py-1 text-xs font-bold">쉬움</button>
+              <button type="button" data-diff="normal" class="diff-btn active-normal rounded py-1 text-xs font-bold">보통</button>
+              <button type="button" data-diff="hard" class="diff-btn bg-[#252c3d] text-[#d0d7e6] rounded py-1 text-xs font-bold">어려움</button>
+              <button type="button" data-diff="impossible" class="diff-btn bg-[#252c3d] text-[#ff7875] rounded py-1 text-xs font-bold">불가능</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <button id="btnRetryStage" type="button" class="pixel-btn btn-crimson rounded-lg py-2 px-3 text-xs sm:text-sm font-bold">
+              ↻ 다시 도전
+            </button>
+            <button id="btnGameOverMenu" type="button" class="pixel-btn btn-hanji rounded-lg py-2 px-3 text-xs sm:text-sm font-bold">
+              전투 선택
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. 최종 승리 & 전주화약·에필로그 화면 -->
+      <div id="overlayVictory" class="hidden absolute inset-0 bg-black/85 flex items-center justify-center p-2.5 sm:p-4 z-20">
+        <div class="pixel-panel rounded-lg w-full max-w-2xl max-h-full overflow-y-auto pixel-scroll p-3.5 sm:p-5 flex flex-col gap-2.5">
+          <div class="text-center border-b-2 border-[#12151e] pb-2">
+            <div class="flex flex-wrap items-center justify-center gap-1.5 mb-1">
+              <span class="px-2.5 py-0.5 bg-[#e8c547] border-2 border-[#12151e] rounded text-xs font-bold">
+                전주성 입성 &amp; 전주화약 (1894.05.07)
+              </span>
+              <span id="victoryDiffBadge" class="px-2.5 py-0.5 bg-[#d9383a] text-white border-2 border-[#12151e] rounded text-xs font-bold">
+                정복 난이도: 보통
+              </span>
+            </div>
+            <h2 class="text-lg sm:text-2xl font-bold text-[#12151e]">
+              폐정개혁안과 집강소의 시대!
+            </h2>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-[#fffdf7] border-2 border-[#12151e] rounded p-2">
+              <div class="text-[11px] text-[#5c4f42]">최종 공훈 점수</div>
+              <div id="victoryTotalScore" class="text-base sm:text-lg font-bold text-[#d9383a]">0점</div>
+            </div>
+            <div class="bg-[#fffdf7] border-2 border-[#12151e] rounded p-2">
+              <div class="text-[11px] text-[#5c4f42]">지휘관 칭호</div>
+              <div id="victoryRank" class="text-sm sm:text-base font-bold text-[#6ea32b]">녹두장군급</div>
+            </div>
+            <div class="bg-[#fffdf7] border-2 border-[#12151e] rounded p-2">
+              <div class="text-[11px] text-[#5c4f42]">핵심 성취</div>
+              <div class="text-xs sm:text-sm font-bold text-[#12151e]">전라도 53군 집강소</div>
+            </div>
+          </div>
+
+          <div class="bg-[#fffdf7] border-2 border-[#12151e] rounded p-2.5 text-xs sm:text-sm leading-relaxed space-y-1.5">
+            <p>
+              <strong>[전주화약과 집강소]</strong> 농민군은 전주성 입성 후 외세의 개입을 막기 위해 정부와 화약을 맺고, 전라도 각지에 민정 자치 기구인 <strong>집강소</strong>를 설치하여 탐관오리 처벌·노비문서 소각·토지 균분 등 폐정개혁안을 스스로 실천했습니다.
+            </p>
+            <p class="text-[#4a3f35] border-t border-[#d8c8ae] pt-1.5">
+              <strong>[에필로그: 우금치에서 오늘까지]</strong> 그해 가을, 일본군의 경복궁 침탈에 맞서 재봉기한 농민군은 공주 우금치에서 근대식 화력 앞에 비극적인 최후를 맞이했습니다. 그러나 남도의 들판에서 피어난 <em>“인내천(사람이 곧 하늘)”</em>과 <em>“보국안민”</em>의 정신은 3·1운동과 대한민국 민주주의의 뿌리로 이어졌습니다.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button id="btnRestartAll" type="button" class="pixel-btn btn-crimson rounded-lg py-2 px-3 text-xs sm:text-sm font-bold">
+              ↻ 처음부터 다시하기
+            </button>
+            <button id="btnVictoryMenu" type="button" class="pixel-btn btn-gold rounded-lg py-2 px-3 text-xs sm:text-sm font-bold">
+              ⚔️ 전투 선택 화면
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/**
+ * ============================================================================
+ * 1894 녹두꽃의 진군: 동학농민운동 8비트 픽셀 아케이드 (800x520 통합 캔버스 판)
+ * - 4단계 난이도: 쉬움(easy) / 보통(normal, 기본) / 어려움(hard) / 불가능(impossible)
+ * - 3스테이지 장태 체력(내구도 HP) 시스템 & 4스테이지 불화살 탄환 개수 제한
+ * - 모든 조작 버튼(집결/돌격, 3갈래 길, 장태 방어/돌격, 좌우 이동/불화살 발사)을
+ *   800x520 게임 캔버스 내부 하단 컨트롤 데크에 직접 내장 (멀티터치 완벽 지원)
+ * ============================================================================
+ */
+
+(function () {
+  'use strict';
+
+  const CANVAS_W = 800;
+  const CANVAS_H = 520;
+  const HUD_TOP_H = 44;     // 캔버스 상단 전술 지시줄 높이
+  const FIELD_BOT_Y = 416;  // 전장 영역 하단 경계 (y: 44 ~ 416)
+  const DECK_Y = 416;       // 캔버스 내부 하단 컨트롤 패널 시작 Y (y: 416 ~ 520)
+
+  /* --------------------------------------------------------------------------
+   * 1. 4단계 난이도 설정 테이블 (쉬움 / 보통 / 어려움 / 불가능)
+   * -------------------------------------------------------------------------- */
+  const DIFFICULTIES = {
+    easy: {
+      key: 'easy',
+      label: '쉬움',
+      maxHp: 5,
+      scoreMult: 0.8,
+      badgeBg: '#6ea32b',
+      badgeText: '#ffffff',
+      specText: '여유로운 속도 · 사기 5♥ · 튼튼한 장태',
+      warningText: '입문자를 위한 여유로운 행군입니다.',
+      isExtreme: false,
+      s1: { speed: 1.0, accel: 0.02, zoneWidth: 0.32, goal: 5 },
+      s2: { reactTime: 3.5, goal: 5, fakeoutChance: 0, multiSwitchChance: 0 },
+      s3: {
+        warnTime: 1.4,
+        reloadTime: 3.0,
+        mashesPerWave: 10,
+        waves: 3,
+        jangtaeMaxHp: 100,
+        bulletDmg: 12,
+        waveRepair: 30,
+        bulletInterval: 0.36,
+        doubleVolley: false,
+        burstVolley: false,
+        pushbackRate: 0
+      },
+      s4: {
+        reticleSpeed: 145,
+        weakpointHalf: 62,
+        goal: 4,
+        maxArrows: 10, // 10발로 4회 명중
+        spawnInterval: 1.45,
+        bombFallTime: 1.65,
+        burstCount: 1,
+        aimedRatio: 0.35
+      }
+    },
+    normal: {
+      key: 'normal',
+      label: '보통',
+      maxHp: 3,
+      scoreMult: 1.0,
+      badgeBg: '#e8c547',
+      badgeText: '#12151e',
+      specText: '표준 밸런스 · 사기 3♥ · 정통 판정',
+      warningText: '균형 잡힌 정통 아케이드 난이도입니다.',
+      isExtreme: false,
+      s1: { speed: 1.45, accel: 0.04, zoneWidth: 0.22, goal: 7 },
+      s2: { reactTime: 2.3, goal: 7, fakeoutChance: 0, multiSwitchChance: 0 },
+      s3: {
+        warnTime: 0.9,
+        reloadTime: 2.2,
+        mashesPerWave: 16,
+        waves: 3,
+        jangtaeMaxHp: 100,
+        bulletDmg: 18,
+        waveRepair: 25,
+        bulletInterval: 0.31,
+        doubleVolley: false,
+        burstVolley: false,
+        pushbackRate: 0.05
+      },
+      s4: {
+        reticleSpeed: 215,
+        weakpointHalf: 46,
+        goal: 5,
+        maxArrows: 8, // 8발로 5회 명중
+        spawnInterval: 1.05,
+        bombFallTime: 1.35,
+        burstCount: 1,
+        aimedRatio: 0.55
+      }
+    },
+    hard: {
+      key: 'hard',
+      label: '어려움',
+      maxHp: 2,
+      scoreMult: 1.5,
+      badgeBg: '#e06d24',
+      badgeText: '#ffffff',
+      specText: '고속 탄막 · 사기 2♥ · 장태 내구 소모 증가',
+      warningText: '정예 관군의 맹공! 높은 순발력이 필요합니다.',
+      isExtreme: false,
+      s1: { speed: 2.1, accel: 0.08, zoneWidth: 0.14, goal: 9 },
+      s2: { reactTime: 1.45, goal: 9, fakeoutChance: 0.65, multiSwitchChance: 0 },
+      s3: {
+        warnTime: 0.55,
+        reloadTime: 1.5,
+        mashesPerWave: 22,
+        waves: 4,
+        jangtaeMaxHp: 100,
+        bulletDmg: 24,
+        waveRepair: 20,
+        bulletInterval: 0.27,
+        doubleVolley: true,
+        burstVolley: false,
+        pushbackRate: 0.12
+      },
+      s4: {
+        reticleSpeed: 295,
+        weakpointHalf: 32,
+        goal: 6,
+        maxArrows: 8, // 8발로 6회 명중
+        spawnInterval: 0.78,
+        bombFallTime: 1.08,
+        burstCount: 2,
+        aimedRatio: 0.72
+      }
+    },
+    impossible: {
+      key: 'impossible',
+      label: '불가능',
+      maxHp: 1,
+      scoreMult: 2.5,
+      badgeBg: '#c92228',
+      badgeText: '#ffffff',
+      specText: '극한의 반사신경 · 사기 1♥ (즉사) · 전탄 명중 필수',
+      warningText: '⚠️ 단 한 번의 실수도 용납되지 않는 극한의 전장',
+      isExtreme: true,
+      s1: { speed: 3.2, accel: 0.14, zoneWidth: 0.075, goal: 12 },
+      s2: { reactTime: 0.85, goal: 12, fakeoutChance: 0.85, multiSwitchChance: 0.45 },
+      s3: {
+        warnTime: 0.32,
+        reloadTime: 1.05,
+        mashesPerWave: 28,
+        waves: 4,
+        jangtaeMaxHp: 100,
+        bulletDmg: 34, // 3발 방어 시 장태 파괴 -> 1♥ 즉사!
+        waveRepair: 15,
+        bulletInterval: 0.24,
+        doubleVolley: true,
+        burstVolley: true,
+        pushbackRate: 0.18
+      },
+      s4: {
+        reticleSpeed: 415,
+        weakpointHalf: 19,
+        goal: 7,
+        maxArrows: 7, // 7발로 7회 전탄 명중 필수!
+        spawnInterval: 0.52,
+        bombFallTime: 0.86,
+        burstCount: 3,
+        aimedRatio: 0.8
+      }
+    }
+  };
+
+  /* --------------------------------------------------------------------------
+   * 2. 동학농민운동 4대 전투 & 사료 데이터
+   * -------------------------------------------------------------------------- */
+  const STAGES = [
+    {
+      id: 1,
+      shortTitle: '1단계: 고부·백산',
+      title: '고부 봉기 & 백산 집결',
+      dateLocation: '1894년 1월 ~ 3월 · 전북 고부 · 부안 백산',
+      mechanicLabel: '타이밍 캐치 돌파',
+      summary: '마커가 중앙 노란 구간에 올 때 클릭/스페이스로 농민을 규합해 바리케이드를 돌파하세요!',
+      historyNote:
+        '고부 군수 조병갑의 만석보 수세 강탈 등 탐학에 맞서 전봉준과 농민들은 사발통문을 돌리고 고부 관아를 점령했습니다. 이후 부안 백산에 집결한 농민군은 흰옷을 입고 죽창을 들어 “앉으면 죽산(竹山), 서면 백산(白山)”이라 불릴 만큼 거대한 민중의 물결을 이루었습니다.'
+    },
+    {
+      id: 2,
+      shortTitle: '2단계: 황토현 전투',
+      title: '황토현 야간 유인 기습전',
+      dateLocation: '1894년 4월 7일 · 전북 정읍 황토현',
+      mechanicLabel: '미끼 유인 & 순발력 야습',
+      summary: '적이 나타난 길에 [횃불 미끼]를 던진 뒤, 빈틈이 드러난 옆길을 제한시간 내 클릭해 기습하세요!',
+      historyNote:
+        '전라 감영군 1만여 명이 추격해 오자 농민군은 황토현 고지에 진을 치고 어두운 밤을 기다렸습니다. 농민군은 산비탈 곳곳에 횃불과 짚단 허수아비를 세워 감영군이 탄약을 낭비하게 만든 뒤, 전열이 흐트러진 틈을 타 기습 공격을 감행하여 첫 대승을 거두었습니다.'
+    },
+    {
+      id: 3,
+      shortTitle: '3단계: 황룡강 (전남 장성)',
+      title: '전남 장성 황룡강 & 장태 전술',
+      dateLocation: '1894년 4월 23일 · 전라남도 장성 황룡강',
+      mechanicLabel: '장태 내구 방어 & 돌격',
+      summary: '조준(!) 시 [장태 방어]를 꾹 눌러 막고(내구도 주의!), 재장전 시 [장태 돌격]을 연타하세요!',
+      historyNote:
+        '전라남도 장성 황룡강에서 농민군은 최신식 소총과 회선포(개틀링 기관포)로 무장한 중앙 정예 경군(홍계훈 부대)과 맞붙었습니다. 농민군은 대나무로 짠 커다란 둥근 닭장(장태) 안에 짚단을 꽉 채워 굴리면서 총탄을 막아내고 근접 돌격하여 경군을 격파하는 기적 같은 승리를 거두었습니다.'
+    },
+    {
+      id: 4,
+      shortTitle: '4단계: 전주성 입성',
+      title: '전주성 함락과 전주화약',
+      dateLocation: '1894년 4월 27일 ~ 5월 7일 · 전주성',
+      mechanicLabel: '탄막 회피 & 제한 불화살',
+      summary: '하단 [좌이동/우이동]으로 포탄을 피하며 제한된 [불화살]로 성문 약점을 명중시키세요!',
+      historyNote:
+        '황룡강 승리의 기세로 북상한 농민군은 호남의 수부(중심지) 전주성을 무혈에 가깝게 점령했습니다. 이후 청·일 양국 군대가 조선에 파병되자 외세의 침략 구실을 없애기 위해 정부와 전주화약을 맺고, 전라도 53개 군현에 집강소를 설치해 폐정개혁안을 단행했습니다.'
+    }
+  ];
+
+  const CODEX_ENTRIES = [
+    {
+      term: '사발통문 (沙鉢通文)',
+      tag: '고부 봉기 · 조직화',
+      desc: '주모자가 누구인지 드러나지 않도록 사발(밥그릇)을 엎어 그린 원 둘레에 서명자들의 이름을 둥글게 적어 돌린 비밀 격문입니다. 농민들의 평등 의식과 결속력을 보여줍니다.'
+    },
+    {
+      term: '백산 집결 (앉으면 죽산, 서면 백산)',
+      tag: '1894년 3월 · 보국안민',
+      desc: '전봉준·김개남·손화중이 이끄는 농민군이 부안 백산에 모여 4대 강령과 격문을 선포했습니다. 농민들이 손에 든 대나무 죽창과 흰 두루마기가 산을 뒤덮어 장관을 이루었습니다.'
+    },
+    {
+      term: '황토현 횃불·허수아비 유인책',
+      tag: '정읍 황토현 · 지형 전술',
+      desc: '화력이 열세했던 농민군은 야간에 횃불과 짚단 허수아비를 배치해 관군의 사격을 유도한 뒤, 화약과 탄환이 소진된 틈을 노려 기습 돌격하는 지략으로 승리했습니다.'
+    },
+    {
+      term: '장태 (대나무 닭장 방패)',
+      tag: '전남 장성 황룡강 · 핵심 무기',
+      desc: '원래 닭을 가두어 기르던 둥근 대나무 바구니(장태)에 젖은 짚단과 솜을 가득 채워 방패로 개조한 무기입니다. 경군의 신식 총탄을 튕겨내며 적진으로 굴러가는 이동식 엄폐물 역할을 했습니다.'
+    },
+    {
+      term: '전주화약과 집강소 (폐정개혁안)',
+      tag: '전주성 · 민중 자치',
+      desc: '전주성 점령 후 농민군과 정부가 맺은 화약으로, 전라도 각지에 설치된 집강소를 통해 탐관오리 징벌, 노비문서 소각, 불합리한 잡세 폐지 등 12개조 폐정개혁안을 실천했습니다.'
+    }
+  ];
+
+  /* --------------------------------------------------------------------------
+   * 3. 8비트 Web Audio API 칩튠 사운드 엔진
+   * -------------------------------------------------------------------------- */
+  class RetroAudio {
+    constructor() {
+      this.ctx = null;
+      this.muted = false;
+    }
+
+    init() {
+      if (!this.ctx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          this.ctx = new AudioCtx();
+        }
+      }
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+    }
+
+    toggleMute() {
+      this.muted = !this.muted;
+      return this.muted;
+    }
+
+    playTone(freq, type, duration, gainVal = 0.14, slideFreq = null, delay = 0) {
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime + delay;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      if (slideFreq) {
+        osc.frequency.exponentialRampToValueAtTime(Math.max(20, slideFreq), now + duration);
+      }
+
+      gain.gain.setValueAtTime(gainVal, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + duration + 0.01);
+    }
+
+    playNoise(duration, filterFreq = 1000, gainVal = 0.16, filterType = 'bandpass') {
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
+
+      const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = filterType;
+      filter.frequency.setValueAtTime(filterFreq, this.ctx.currentTime);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      noise.start();
+    }
+
+    click() {
+      this.playTone(640, 'square', 0.055, 0.1, 900);
+    }
+
+    selectDiff(isImpossible = false) {
+      if (isImpossible) {
+        this.playTone(220, 'sawtooth', 0.14, 0.16, 110);
+        this.playTone(146.83, 'square', 0.22, 0.16, 73.4, 0.08);
+      } else {
+        this.playTone(523.25, 'square', 0.07, 0.11, 659.25);
+      }
+    }
+
+    rally() {
+      this.playTone(130, 'triangle', 0.34, 0.22, 75);
+      this.playTone(392, 'square', 0.11, 0.12, 523, 0.04);
+      this.playTone(523, 'square', 0.17, 0.14, 659, 0.11);
+    }
+
+    slash() {
+      this.playNoise(0.13, 1900, 0.18, 'highpass');
+      this.playTone(460, 'sawtooth', 0.09, 0.12, 150);
+    }
+
+    deflect() {
+      this.playTone(980, 'square', 0.055, 0.1, 1520);
+      this.playNoise(0.065, 950, 0.12, 'bandpass');
+    }
+
+    shatter() {
+      this.playNoise(0.32, 650, 0.24, 'bandpass');
+      this.playTone(280, 'sawtooth', 0.26, 0.2, 58);
+    }
+
+    fire() {
+      this.playNoise(0.24, 720, 0.19, 'bandpass');
+      this.playTone(270, 'sawtooth', 0.2, 0.1, 600);
+    }
+
+    gunfire() {
+      this.playNoise(0.1, 1450, 0.14, 'lowpass');
+      this.playTone(185, 'square', 0.075, 0.1, 62);
+    }
+
+    explosion() {
+      this.playNoise(0.4, 420, 0.25, 'lowpass');
+      this.playTone(115, 'sawtooth', 0.36, 0.22, 32);
+    }
+
+    hurt() {
+      this.playTone(195, 'sawtooth', 0.16, 0.18, 95);
+      this.playTone(140, 'square', 0.2, 0.16, 68, 0.08);
+    }
+
+    defeatJingle() {
+      const notes = [392.0, 349.23, 311.13, 261.63];
+      notes.forEach((n, idx) => {
+        this.playTone(n, 'sawtooth', idx === 3 ? 0.45 : 0.14, 0.14, null, idx * 0.13);
+      });
+    }
+
+    stageClear() {
+      const notes = [523.25, 587.33, 659.25, 783.99, 1046.5];
+      notes.forEach((n, idx) => {
+        this.playTone(n, 'square', idx === 4 ? 0.42 : 0.12, 0.14, null, idx * 0.1);
+      });
+    }
+  }
+
+  const audio = new RetroAudio();
+
+  /* --------------------------------------------------------------------------
+   * 4. 프로시저럴 8비트 픽셀 스프라이트 베이크 엔진
+   * -------------------------------------------------------------------------- */
+  function bakeSprite(rows, palette, scale = 3) {
+    const h = rows.length;
+    const w = rows[0].length;
+    const c = document.createElement('canvas');
+    c.width = w * scale;
+    c.height = h * scale;
+    const g = c.getContext('2d');
+    g.imageSmoothingEnabled = false;
+
+    for (let y = 0; y < h; y++) {
+      const row = rows[y];
+      for (let x = 0; x < w; x++) {
+        const ch = row[x];
+        if (ch !== '.' && palette[ch]) {
+          g.fillStyle = palette[ch];
+          g.fillRect(x * scale, y * scale, scale, scale);
+        }
+      }
+    }
+    return c;
+  }
+
+  const PAL = {
+    K: '#12151e', // 먹선 외곽선
+    W: '#f7f3e8', // 흰 무명옷 / 머리띠
+    G: '#d8ceb8', // 옷 주름 음영
+    S: '#e8b686', // 피부색
+    H: '#d49b4b', // 패랭이 / 짚단 밝은색
+    B: '#8c5828', // 대나무 / 짚단 어두운색
+    Y: '#f2c14e', // 황금/불꽃 중심
+    R: '#d9383a', // 붉은 횃불/관군 장식
+    O: '#eb7a28', // 주황 불꽃
+    N: '#2b3e59', // 관군·경군 남색 군복
+    D: '#1b2638', // 어두운 군복 음영
+    M: '#9ea7b3', // 총신 / 쇠붙이
+    E: '#9ec83b'  // 녹두꽃 연두색
+  };
+
+  const SPRITES = {
+    // 농민군 (흰 무명옷 + 머리띠 + 죽창) 2프레임
+    peasant1: bakeSprite([
+      '....HHHH....',
+      '..HHHHHHHH..',
+      '.KWWWWWWWWK.',
+      '..KSSSSSSK..',
+      '..KSKSSKSK..',
+      '...KSSSSK...',
+      '..KWWWWWWK.B',
+      '.KWWGWWGWWKB',
+      '.KSKWWWWKSKB',
+      '..K.WWWW.K.B',
+      '....KWWK...B',
+      '...KWKKWK..B',
+      '...KW..WK..M',
+      '..KKK..KKK..'
+    ], PAL, 3),
+
+    peasant2: bakeSprite([
+      '....HHHH....',
+      '..HHHHHHHH..',
+      '.KWWWWWWWWK.',
+      '..KSSSSSSK..',
+      '..KSKSSKSK..',
+      '...KSSSSK...',
+      '..KWWWWWWK..',
+      '.KWWGWWGWWKB',
+      '..KSWWWWKSKB',
+      '...KWWWWK..B',
+      '....KWWK...B',
+      '..KWK..KWK.B',
+      '.KWK....KWKM',
+      '.KK......KK.'
+    ], PAL, 3),
+
+    // 장태 (짚단을 채운 둥근 대나무 닭장 방패) 2프레임
+    jangtae1: bakeSprite([
+      '....KKKKKK....',
+      '..KKHHHHHHKK..',
+      '.KHHBYYYYBHHK.',
+      'KHBYYHHHHYYBHK',
+      'KHYBHHHHHHBYHK',
+      'KBHHBYYYYBHHBK',
+      'KHYHYYYYYYHYHK',
+      'KBHHBYYYYBHHBK',
+      'KHYBHHHHHHBYHK',
+      'KHBYYHHHHYYBHK',
+      '.KHHBYYYYBHHK.',
+      '..KKHHHHHHKK..',
+      '....KKKKKK....'
+    ], PAL, 4),
+
+    jangtae2: bakeSprite([
+      '....KKKKKK....',
+      '..KKBYYYYBKK..',
+      '.KBYYHHHHYYBK.',
+      'KHYBHHHHHHBYHK',
+      'KBHHBYYYYBHHBK',
+      'KHYHYYYYYYHYHK',
+      'KHHBYYYYYYBHHK',
+      'KHYHYYYYYYHYHK',
+      'KBHHBYYYYBHHBK',
+      'KHYBHHHHHHBYHK',
+      '.KBYYHHHHYYBK.',
+      '..KKBYYYYBKK..',
+      '....KKKKKK....'
+    ], PAL, 4),
+
+    // 관군 포졸
+    guard1: bakeSprite([
+      '...KKKKKK...',
+      '.KKKKKKKKKK.',
+      '...KSSSSK...',
+      '...KSKKSK...',
+      '....KSSK....',
+      '..KNNNNNNK..',
+      '.KNNRWWKNNK.',
+      'MKSKNNNNKSK.',
+      'M..KNNNNK...',
+      'M...KNNK....',
+      '...KNKKNK...',
+      '...KN..NK...',
+      '..KKK..KKK..'
+    ], PAL, 3),
+
+    // 중앙 경군 (신식 소총수)
+    rifleman: bakeSprite([
+      '....KKKK....',
+      '...KRRRRK...',
+      '..KKKKKKKK..',
+      '...KSSSSK...',
+      '...KSKKSK...',
+      '..KNNNNNNK..',
+      'MMKNYNNYNK..',
+      'MMKSNNNNKSK.',
+      '...KNNNNK...',
+      '....KNNK....',
+      '...KNKKNK...',
+      '..KNK..KNK..',
+      '..KK....KK..'
+    ], PAL, 3),
+
+    // 횃불·허수아비 미끼
+    decoy: bakeSprite([
+      '.....YY.....',
+      '....YOOY....',
+      '....KRRK....',
+      '....HHHH....',
+      '..HHHHHHHH..',
+      '....KHHK....',
+      '.KKKKKKKKKK.',
+      '..BHHHHHHB..',
+      '...BHHHHB...',
+      '....BHHB....',
+      '.....KK.....',
+      '.....KK.....',
+      '.....KK.....'
+    ], PAL, 3),
+
+    // 농민 화차 (불화살 발사대)
+    fireCart: bakeSprite([
+      '..R..R..R..R..',
+      '.YYYYYYYYYYYY.',
+      '.BBBBBBBBBBBB.',
+      'KBBBBBBBBBBBBK',
+      'KBHHHHHHHHHHBK',
+      'KBBBBBBBBBBBBK',
+      '.KKKKKKKKKKKK.',
+      '..KKK....KKK..',
+      '.KBBBK..KBBBK.',
+      '.KBKBK..KBKBK.',
+      '.KBBBK..KBBBK.',
+      '..KKK....KKK..'
+    ], PAL, 3)
+  };
+
+  /* --------------------------------------------------------------------------
+   * 5. DOM 참조 & UI 요소 바인딩
+   * -------------------------------------------------------------------------- */
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  const ui = {
+    hudStageName: document.getElementById('hudStageName'),
+    hudDiffBadge: document.getElementById('hudDiffBadge'),
+    hudHeartsWrap: document.getElementById('hudHeartsWrap'),
+    hudHearts: document.getElementById('hudHearts'),
+    hudScoreWrap: document.getElementById('hudScoreWrap'),
+    hudScore: document.getElementById('hudScore'),
+    btnStageMenuTop: document.getElementById('btnStageMenuTop'),
+    btnMute: document.getElementById('btnMute'),
+
+    titleDiffSpec: document.getElementById('titleDiffSpec'),
+    titleDiffWarning: document.getElementById('titleDiffWarning'),
+
+    overlayTitle: document.getElementById('overlayTitle'),
+    overlayStageSelect: document.getElementById('overlayStageSelect'),
+    overlayCodex: document.getElementById('overlayCodex'),
+    overlayStageClear: document.getElementById('overlayStageClear'),
+    overlayGameOver: document.getElementById('overlayGameOver'),
+    overlayVictory: document.getElementById('overlayVictory'),
+
+    stageSelectGrid: document.getElementById('stageSelectGrid'),
+    codexList: document.getElementById('codexList'),
+
+    clearStageTag: document.getElementById('clearStageTag'),
+    clearDiffBadge: document.getElementById('clearDiffBadge'),
+    clearStageMeta: document.getElementById('clearStageMeta'),
+    clearStageTitle: document.getElementById('clearStageTitle'),
+    clearHistoryDesc: document.getElementById('clearHistoryDesc'),
+    clearScoreText: document.getElementById('clearScoreText'),
+    btnNextStage: document.getElementById('btnNextStage'),
+
+    gameOverReason: document.getElementById('gameOverReason'),
+    victoryDiffBadge: document.getElementById('victoryDiffBadge'),
+    victoryTotalScore: document.getElementById('victoryTotalScore'),
+    victoryRank: document.getElementById('victoryRank')
+  };
+
+  /* --------------------------------------------------------------------------
+   * 6. 게임 전역 상태 & 캔버스 내부 버튼 / 멀티터치 입력 상태
+   * -------------------------------------------------------------------------- */
+  const game = {
+    mode: 'TITLE', // TITLE | PLAYING | STAGE_CLEAR | GAME_OVER | VICTORY
+    difficulty: 'normal', // easy | normal | hard | impossible (기본: normal)
+    stageIndex: 0, // 0 ~ 3
+    hearts: 3,
+    maxHearts: 3,
+    score: 0,
+    time: 0,
+    shakeTime: 0,
+    shakeIntensity: 0,
+    flashAlpha: 0,
+    flashColor: '#ffffff',
+    bannerTimer: 0,
+    particles: [],
+    floatingTexts: [],
+    keys: {
+      left: false,
+      right: false,
+      space: false
+    },
+    // 멀티터치/마우스 포인터 추적 (pointerId -> { x, y, btnId })
+    activePointers: new Map(),
+    canvasButtons: [], // 매 프레임 현재 스테이지의 캔버스 내부 버튼 목록
+    s1: null,
+    s2: null,
+    s3: null,
+    s4: null
+  };
+
+  function getDiffConfig() {
+    return DIFFICULTIES[game.difficulty] || DIFFICULTIES.normal;
+  }
+
+  function isCanvasBtnHeld(btnId) {
+    for (const info of game.activePointers.values()) {
+      if (info.btnId === btnId) return true;
+    }
+    return false;
+  }
+
+  function triggerShake(duration = 0.22, intensity = 5) {
+    game.shakeTime = Math.max(game.shakeTime, duration);
+    game.shakeIntensity = Math.max(game.shakeIntensity, intensity);
+  }
+
+  function triggerFlash(color = '#ffffff', alpha = 0.35) {
+    game.flashColor = color;
+    game.flashAlpha = Math.max(game.flashAlpha, alpha);
+  }
+
+  function spawnParticles(x, y, colors, count = 14, speed = 130, gravity = 240) {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd = (0.3 + Math.random() * 0.7) * speed;
+      game.particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd - 40,
+        size: Math.random() < 0.5 ? 4 : 6,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 0.45 + Math.random() * 0.35,
+        gravity
+      });
+    }
+  }
+
+  function spawnFloatingText(x, y, text, color = '#e8c547', size = 18) {
+    game.floatingTexts.push({
+      x,
+      y,
+      vy: -36,
+      text,
+      color,
+      size,
+      life: 1.05
+    });
+  }
+
+  function updateEffects(dt) {
+    if (game.shakeTime > 0) game.shakeTime = Math.max(0, game.shakeTime - dt);
+    if (game.flashAlpha > 0) game.flashAlpha = Math.max(0, game.flashAlpha - dt * 1.6);
+    if (game.bannerTimer > 0) game.bannerTimer = Math.max(0, game.bannerTimer - dt);
+
+    for (let i = game.particles.length - 1; i >= 0; i--) {
+      const p = game.particles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += p.gravity * dt;
+      p.life -= dt;
+      if (p.life <= 0) game.particles.splice(i, 1);
+    }
+
+    for (let i = game.floatingTexts.length - 1; i >= 0; i--) {
+      const ft = game.floatingTexts[i];
+      ft.y += ft.vy * dt;
+      ft.life -= dt;
+      if (ft.life <= 0) game.floatingTexts.splice(i, 1);
+    }
+  }
+
+  function renderEffects() {
+    for (const p of game.particles) {
+      ctx.fillStyle = p.color;
+      ctx.fillRect(Math.floor(p.x), Math.floor(p.y), p.size, p.size);
+    }
+
+    ctx.textAlign = 'center';
+    for (const ft of game.floatingTexts) {
+      ctx.font = `bold ${ft.size}px DungGeunMo, Galmuri9, monospace`;
+      ctx.fillStyle = '#0d1017';
+      ctx.fillText(ft.text, Math.floor(ft.x) + 2, Math.floor(ft.y) + 2);
+      ctx.fillStyle = ft.color;
+      ctx.fillText(ft.text, Math.floor(ft.x), Math.floor(ft.y));
+    }
+
+    if (game.flashAlpha > 0) {
+      ctx.fillStyle = game.flashColor;
+      ctx.globalAlpha = Math.min(0.6, game.flashAlpha);
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+      ctx.globalAlpha = 1.0;
+    }
+  }
+
+  /* --------------------------------------------------------------------------
+   * 7. 캔버스 내부 8비트 아케이드 버튼 & 상단 지시줄 렌더링 헬퍼
+   * -------------------------------------------------------------------------- */
+  function drawPixelButton(btn) {
+    const pressed = btn.pressed || isCanvasBtnHeld(btn.id);
+    const offsetY = pressed ? 4 : 0;
+    const x = Math.floor(btn.x);
+    const y = Math.floor(btn.y + offsetY);
+    const w = Math.floor(btn.w);
+    const h = Math.floor(btn.h - (pressed ? 4 : 0));
+
+    // 버튼 그림자
+    ctx.fillStyle = '#06080c';
+    ctx.fillRect(x, Math.floor(btn.y + 4), w, Math.floor(btn.h));
+
+    // 외곽선
+    ctx.fillStyle = '#0d1017';
+    ctx.fillRect(x, y, w, h);
+
+    // 본체 면
+    ctx.fillStyle = btn.disabled ? '#383e4d' : btn.bg;
+    ctx.fillRect(x + 3, y + 3, w - 6, h - 6);
+
+    // 상단/좌측 하이라이트 & 하단/우측 음영
+    if (!btn.disabled) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.26)';
+      ctx.fillRect(x + 3, y + 3, w - 6, 4);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      ctx.fillRect(x + 3, y + h - 7, w - 6, 4);
+    }
+
+    // 강조 테두리(활성 상태)
+    if (btn.glowColor) {
+      ctx.strokeStyle = btn.glowColor;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
+    }
+
+    // 버튼 텍스트
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const fontSize = btn.fontSize || 20;
+    ctx.font = `bold ${fontSize}px DungGeunMo, Galmuri9, monospace`;
+    const textY = btn.subLabel ? y + h * 0.38 : y + h * 0.52;
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.fillText(btn.label, x + w / 2 + 2, textY + 2);
+    ctx.fillStyle = btn.disabled ? '#8b93a6' : btn.fg;
+    ctx.fillText(btn.label, x + w / 2, textY);
+
+    if (btn.subLabel) {
+      ctx.font = '13px DungGeunMo, Galmuri9, monospace';
+      ctx.fillStyle = btn.disabled ? '#757d8f' : btn.subFg || btn.fg;
+      ctx.fillText(btn.subLabel, x + w / 2, y + h * 0.74);
+    }
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  function renderCanvasTopBanner(badgeText, summaryText, progressText) {
+    const cfg = getDiffConfig();
+    ctx.fillStyle = '#12151e';
+    ctx.fillRect(0, 0, CANVAS_W, HUD_TOP_H);
+    ctx.fillStyle = cfg.isExtreme ? '#d9383a' : '#9ec83b';
+    ctx.fillRect(0, HUD_TOP_H - 3, CANVAS_W, 3);
+
+    // 좌측 전술 배지
+    ctx.fillStyle = cfg.isExtreme ? '#d9383a' : '#9ec83b';
+    ctx.fillRect(12, 8, 132, 26);
+    ctx.fillStyle = cfg.isExtreme ? '#ffffff' : '#12151e';
+    ctx.font = 'bold 14px DungGeunMo, Galmuri9, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(badgeText, 78, 26);
+
+    // 중앙 한 줄 지시문
+    ctx.fillStyle = '#f4ecdc';
+    ctx.font = '15px DungGeunMo, Galmuri9, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(summaryText, 154, 26);
+
+    // 우측 목표 진행도
+    ctx.fillStyle = '#e8c547';
+    ctx.font = 'bold 16px DungGeunMo, Galmuri9, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(progressText, CANVAS_W - 14, 26);
+  }
+
+  function renderControlDeckFrame() {
+    ctx.fillStyle = '#141824';
+    ctx.fillRect(0, DECK_Y, CANVAS_W, CANVAS_H - DECK_Y);
+    ctx.fillStyle = '#080a0f';
+    ctx.fillRect(0, DECK_Y, CANVAS_W, 4);
+    ctx.fillStyle = '#2b3347';
+    ctx.fillRect(0, DECK_Y + 4, CANVAS_W, 2);
+  }
+
+  /* --------------------------------------------------------------------------
+   * 8. 난이도 선택 동기화 및 HUD/오버레이 전환
+   * -------------------------------------------------------------------------- */
+  function setDifficulty(diffKey, playSound = true) {
+    if (!DIFFICULTIES[diffKey]) return;
+    game.difficulty = diffKey;
+    const cfg = getDiffConfig();
+    game.maxHearts = cfg.maxHp;
+    game.hearts = cfg.maxHp;
+
+    if (playSound) {
+      audio.selectDiff(cfg.isExtreme);
+    }
+
+    document.querySelectorAll('.diff-btn').forEach((btn) => {
+      const key = btn.getAttribute('data-diff');
+      btn.classList.remove('active-easy', 'active-normal', 'active-hard', 'active-impossible');
+      if (key === diffKey) {
+        btn.classList.add(`active-${key}`);
+      }
+    });
+
+    ui.titleDiffSpec.textContent = cfg.specText;
+    ui.titleDiffWarning.textContent = cfg.warningText;
+    if (cfg.isExtreme) {
+      ui.titleDiffWarning.className =
+        'mt-1.5 text-center text-[11px] sm:text-xs font-bold text-[#ff7875] py-1 px-2 rounded bg-[#3b0d11] border border-[#d9383a]';
+    } else {
+      ui.titleDiffWarning.className =
+        'mt-1.5 text-center text-[11px] sm:text-xs text-[#d0d7e6] py-0.5 px-2 rounded bg-[#0d1017]/80';
+    }
+
+    updateHUD();
+  }
+
+  function applyBadgeStyle(el, cfg, prefix = '') {
+    el.textContent = `${prefix}${cfg.label}`;
+    el.style.backgroundColor = cfg.badgeBg;
+    el.style.color = cfg.badgeText;
+  }
+
+  function hideAllOverlays() {
+    ui.overlayTitle.classList.add('hidden');
+    ui.overlayStageSelect.classList.add('hidden');
+    ui.overlayCodex.classList.add('hidden');
+    ui.overlayStageClear.classList.add('hidden');
+    ui.overlayGameOver.classList.add('hidden');
+    ui.overlayVictory.classList.add('hidden');
+  }
+
+  function updateHUD() {
+    const cfg = getDiffConfig();
+    applyBadgeStyle(ui.hudDiffBadge, cfg, '난이도: ');
+    ui.hudScore.textContent = String(Math.floor(game.score)).padStart(4, '0');
+
+    const full = '♥'.repeat(Math.max(0, game.hearts));
+    const empty = '♡'.repeat(Math.max(0, game.maxHearts - game.hearts));
+    ui.hudHearts.textContent = full + empty;
+
+    if (game.mode === 'PLAYING') {
+      const st = STAGES[game.stageIndex];
+      ui.hudStageName.textContent = st.shortTitle;
+      ui.hudHeartsWrap.classList.remove('hidden');
+      ui.hudScoreWrap.classList.remove('hidden');
+    } else if (game.mode === 'TITLE') {
+      ui.hudStageName.textContent = '녹두꽃의 진군';
+      ui.hudHeartsWrap.classList.add('hidden');
+      ui.hudScoreWrap.classList.add('hidden');
+    }
+  }
+
+  function goToTitle() {
+    game.mode = 'TITLE';
+    game.activePointers.clear();
+    game.keys.left = false;
+    game.keys.right = false;
+    game.keys.space = false;
+    hideAllOverlays();
+    ui.overlayTitle.classList.remove('hidden');
+    updateHUD();
+  }
+
+  function addScore(basePoints) {
+    const cfg = getDiffConfig();
+    game.score += Math.round(basePoints * cfg.scoreMult);
+  }
+
+  function triggerGameOver(reasonText) {
+    audio.defeatJingle();
+    game.mode = 'GAME_OVER';
+    game.activePointers.clear();
+    game.keys.left = false;
+    game.keys.right = false;
+    game.keys.space = false;
+    const cfg = getDiffConfig();
+    ui.gameOverReason.textContent = cfg.isExtreme
+      ? `[불가능 난이도] ${reasonText}`
+      : reasonText;
+    hideAllOverlays();
+    ui.overlayGameOver.classList.remove('hidden');
+    updateHUD();
+  }
+
+  function damagePlayer(reasonText, x = 200, y = 240) {
+    game.hearts = Math.max(0, game.hearts - 1);
+    audio.hurt();
+    triggerShake(0.28, 7);
+    triggerFlash('#d9383a', 0.35);
+    spawnParticles(x, y, ['#d9383a', '#f7f3e8', '#12151e'], 16, 150, 260);
+    spawnFloatingText(x, y - 24, game.hearts <= 0 ? '치명타! 전열 붕괴!' : '사기 저하! -1♥', '#ff4d4f', 18);
+    updateHUD();
+
+    if (game.hearts <= 0) {
+      triggerGameOver(reasonText);
+    }
+  }
+
+  function completeStage() {
+    audio.stageClear();
+    triggerFlash('#9ec83b', 0.28);
+    game.activePointers.clear();
+    game.keys.left = false;
+    game.keys.right = false;
+    game.keys.space = false;
+    game.mode = 'STAGE_CLEAR';
+
+    const st = STAGES[game.stageIndex];
+    const cfg = getDiffConfig();
+    const bonus = Math.round(game.hearts * 150 * cfg.scoreMult);
+    game.score += bonus;
+
+    ui.clearStageTag.textContent = `제${st.id}전투 승리! (+${bonus}점)`;
+    applyBadgeStyle(ui.clearDiffBadge, cfg, '난이도: ');
+    ui.clearStageMeta.textContent = st.dateLocation;
+    ui.clearStageTitle.textContent = st.title;
+    ui.clearHistoryDesc.textContent = st.historyNote;
+    ui.clearScoreText.textContent = game.score;
+
+    if (game.stageIndex < STAGES.length - 1) {
+      ui.btnNextStage.textContent = `제${game.stageIndex + 2}전투로 출정 ▶`;
+    } else {
+      ui.btnNextStage.textContent = '전주화약 체결 및 엔딩 보기 ▶';
+    }
+
+    hideAllOverlays();
+    ui.overlayStageClear.classList.remove('hidden');
+    updateHUD();
+  }
+
+  function showVictoryScreen() {
+    game.mode = 'VICTORY';
+    const cfg = getDiffConfig();
+    applyBadgeStyle(ui.victoryDiffBadge, cfg, '정복 난이도: ');
+    ui.victoryTotalScore.textContent = `${game.score}점`;
+
+    let rank = '의로운 동학 농민군';
+    if (cfg.key === 'impossible') rank = '전설의 녹두장군 (극한 정복)';
+    else if (cfg.key === 'hard') rank = '전봉준 녹두장군급';
+    else if (game.score >= 2200) rank = '대접주급 선봉 지휘관';
+    else rank = '백산의 용맹한 접주';
+
+    ui.victoryRank.textContent = rank;
+
+    hideAllOverlays();
+    ui.overlayVictory.classList.remove('hidden');
+    updateHUD();
+  }
+
+  /* --------------------------------------------------------------------------
+   * 9. 스테이지별 초기화, 업데이트 및 캔버스 렌더링
+   * -------------------------------------------------------------------------- */
+  function startStage(index) {
+    const cfg = getDiffConfig();
+    game.stageIndex = index;
+    game.mode = 'PLAYING';
+    game.maxHearts = cfg.maxHp;
+    game.hearts = cfg.maxHp;
+    game.particles = [];
+    game.floatingTexts = [];
+    game.activePointers.clear();
+    game.keys.left = false;
+    game.keys.right = false;
+    game.keys.space = false;
+    game.bannerTimer = cfg.isExtreme ? 1.15 : 1.7;
+
+    hideAllOverlays();
+
+    if (index === 0) initStage1();
+    else if (index === 1) initStage2();
+    else if (index === 2) initStage3();
+    else if (index === 3) initStage4();
+
+    setupStageCanvasButtons();
+    updateHUD();
+  }
+
+  function setupStageCanvasButtons() {
+    game.canvasButtons = [];
+    if (game.stageIndex === 0) {
+      game.canvasButtons.push({
+        id: 's1_rally',
+        x: 90,
+        y: DECK_Y + 14,
+        w: 620,
+        h: 74,
+        bg: '#e8c547',
+        fg: '#12151e',
+        label: '✊ 농민 규합 & 죽창 돌격!',
+        subLabel: '마커가 중앙 노란 구간에 올 때 터치 / 클릭 / SPACE',
+        fontSize: 22,
+        onDown: () => actionStage1()
+      });
+    } else if (game.stageIndex === 1) {
+      const laneLabels = ['🔥 1. 상단 산길', '🔥 2. 중단 고갯길', '🔥 3. 하단 계곡길'];
+      for (let i = 0; i < 3; i++) {
+        game.canvasButtons.push({
+          id: `s2_lane_${i}`,
+          x: 28 + i * 252,
+          y: DECK_Y + 14,
+          w: 240,
+          h: 74,
+          bg: '#f4ecdc',
+          fg: '#12151e',
+          label: laneLabels[i],
+          subLabel: `단축키 [${i + 1}] / 길 직접 터치`,
+          fontSize: 18,
+          onDown: () => actionStage2Lane(i)
+        });
+      }
+    } else if (game.stageIndex === 2) {
+      game.canvasButtons.push(
+        {
+          id: 's3_defend',
+          x: 28,
+          y: DECK_Y + 14,
+          w: 362,
+          h: 74,
+          bg: '#2b3e59',
+          fg: '#f4ecdc',
+          label: '🛡️ 장태 방어 (꾹 누르기)',
+          subLabel: '경군 조준(!) 시 떼지 말고 꾹 누르세요!',
+          fontSize: 20,
+          onDown: () => {}
+        },
+        {
+          id: 's3_push',
+          x: 410,
+          y: DECK_Y + 14,
+          w: 362,
+          h: 74,
+          bg: '#d9383a',
+          fg: '#fff9f0',
+          label: '🔥 장태 돌격 (연타!)',
+          subLabel: '경군 재장전 틈에 빠르게 연타해 전진!',
+          fontSize: 20,
+          onDown: () => actionStage3Tap()
+        }
+      );
+    } else if (game.stageIndex === 3) {
+      game.canvasButtons.push(
+        {
+          id: 's4_left',
+          x: 24,
+          y: DECK_Y + 14,
+          w: 176,
+          h: 74,
+          bg: '#f4ecdc',
+          fg: '#12151e',
+          label: '◀ 좌이동',
+          subLabel: '[← / A]',
+          fontSize: 20,
+          onDown: () => {}
+        },
+        {
+          id: 's4_right',
+          x: 212,
+          y: DECK_Y + 14,
+          w: 176,
+          h: 74,
+          bg: '#f4ecdc',
+          fg: '#12151e',
+          label: '우이동 ▶',
+          subLabel: '[→ / D]',
+          fontSize: 20,
+          onDown: () => {}
+        },
+        {
+          id: 's4_fire',
+          x: 412,
+          y: DECK_Y + 14,
+          w: 364,
+          h: 74,
+          bg: '#d9383a',
+          fg: '#fff9f0',
+          label: '🔥 불화살 발사!',
+          subLabel: '성문 약점 조준 시 발사 [SPACE]',
+          fontSize: 21,
+          onDown: () => actionStage4Fire()
+        }
+      );
+    }
+  }
+
+  /* ==========================================================================
+   * [STAGE 1] 고부 봉기 & 백산 집결: 타이밍 캐치 돌파
+   * ========================================================================== */
+  function initStage1() {
+    const sc = getDiffConfig().s1;
+    game.s1 = {
+      cursor: 0.12,
+      dir: 1,
+      speed: sc.speed,
+      accel: sc.accel,
+      zoneWidth: sc.zoneWidth,
+      hits: 0,
+      goal: sc.goal,
+      peasantsCount: 5,
+      chargeAnim: 0,
+      hitFeedback: '',
+      hitColor: '#e8c547',
+      hitTimer: 0
+    };
+  }
+
+  function actionStage1() {
+    if (game.mode !== 'PLAYING' || game.stageIndex !== 0) return;
+    const s = game.s1;
+    const dist = Math.abs(s.cursor - 0.5);
+    const halfZone = s.zoneWidth / 2;
+
+    if (dist <= halfZone) {
+      const isCrit = dist <= halfZone * 0.38;
+      s.hits++;
+      s.speed += s.accel;
+      s.peasantsCount = Math.min(24, s.peasantsCount + (isCrit ? 2 : 1));
+      s.chargeAnim = 0.4;
+
+      if (isCrit) {
+        audio.rally();
+        audio.slash();
+        addScore(260);
+        s.hitFeedback = '대격려! 죽창이 숲을 이루다!';
+        s.hitColor = '#e8c547';
+        triggerShake(0.18, 5);
+        triggerFlash('#e8c547', 0.2);
+        spawnParticles(590, 240, ['#e8c547', '#9ec83b', '#f7f3e8'], 20, 175, 210);
+        spawnFloatingText(580, 195, `대격려 돌파! (${s.hits}/${s.goal})`, '#e8c547', 19);
+      } else {
+        audio.slash();
+        addScore(160);
+        s.hitFeedback = '농민 규합 성공! 바리케이드 타격!';
+        s.hitColor = '#9ec83b';
+        spawnParticles(590, 245, ['#f7f3e8', '#d49b4b'], 12, 130, 190);
+        spawnFloatingText(580, 205, `돌파 성공! (${s.hits}/${s.goal})`, '#9ec83b', 18);
+      }
+
+      s.hitTimer = 0.85;
+      updateHUD();
+
+      if (s.hits >= s.goal) {
+        audio.explosion();
+        spawnParticles(610, 240, ['#d49b4b', '#8c5828', '#e8c547'], 30, 210, 240);
+        completeStage();
+      }
+    } else {
+      s.hitFeedback = '박자가 어긋나 관군이 일제 사격합니다!';
+      s.hitColor = '#ff4d4f';
+      s.hitTimer = 0.85;
+      damagePlayer('고부 관아 수비대의 화승총 사격에 대열이 흐트러졌습니다!', 260, 240);
+    }
+  }
+
+  function updateStage1(dt) {
+    const s = game.s1;
+    s.cursor += s.dir * s.speed * dt;
+    if (s.cursor >= 0.97) {
+      s.cursor = 0.97;
+      s.dir = -1;
+    } else if (s.cursor <= 0.03) {
+      s.cursor = 0.03;
+      s.dir = 1;
+    }
+    if (s.chargeAnim > 0) s.chargeAnim = Math.max(0, s.chargeAnim - dt);
+    if (s.hitTimer > 0) s.hitTimer = Math.max(0, s.hitTimer - dt);
+  }
+
+  function renderStage1() {
+    const s = game.s1;
+    renderCanvasTopBanner(
+      '타이밍 캐치 돌파',
+      STAGES[0].summary,
+      `${s.hits} / ${s.goal} 돌파`
+    );
+
+    // 황혼의 백산 하늘
+    const skyGrad = ctx.createLinearGradient(0, HUD_TOP_H, 0, 275);
+    skyGrad.addColorStop(0, '#1e1a2e');
+    skyGrad.addColorStop(0.55, '#8f3d2e');
+    skyGrad.addColorStop(1, '#de9343');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, HUD_TOP_H, CANVAS_W, 231);
+
+    // 백산 능선
+    ctx.fillStyle = '#3b2426';
+    ctx.beginPath();
+    ctx.moveTo(0, 275);
+    ctx.lineTo(170, 175);
+    ctx.lineTo(365, 240);
+    ctx.lineTo(585, 145);
+    ctx.lineTo(800, 230);
+    ctx.lineTo(800, 275);
+    ctx.fill();
+
+    // 서면 백산, 앉으면 죽산 표지 배지
+    ctx.fillStyle = 'rgba(18, 21, 30, 0.78)';
+    ctx.fillRect(20, 56, 224, 28);
+    ctx.strokeStyle = '#e8c547';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(20, 56, 224, 28);
+    ctx.fillStyle = '#f4ecdc';
+    ctx.font = '14px DungGeunMo, Galmuri9, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('“서면 백산, 앉으면 죽산”', 132, 75);
+
+    // 황토 땅바닥
+    ctx.fillStyle = '#5e3b22';
+    ctx.fillRect(0, 270, CANVAS_W, 146);
+    ctx.fillStyle = '#452b18';
+    ctx.fillRect(0, 315, CANVAS_W, 101);
+
+    // 아군 농민군 & 보국안민 깃발
+    const chargeOffset = s.chargeAnim > 0 ? Math.sin((s.chargeAnim / 0.4) * Math.PI) * 90 : 0;
+    const frame = Math.floor(game.time * 8) % 2 === 0 ? SPRITES.peasant1 : SPRITES.peasant2;
+
+    const flagX = 82 + chargeOffset * 0.6;
+    ctx.fillStyle = '#2b180c';
+    ctx.fillRect(flagX, 142, 4, 132);
+    const sway = Math.sin(game.time * 6) * 3;
+    ctx.fillStyle = '#f4ecdc';
+    ctx.fillRect(flagX + 4, 146 + sway, 80, 44);
+    ctx.strokeStyle = '#12151e';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(flagX + 4, 146 + sway, 80, 44);
+    ctx.fillStyle = '#d9383a';
+    ctx.font = 'bold 16px DungGeunMo, Galmuri9, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('보국안민', flagX + 44, 174 + sway);
+
+    for (let i = 0; i < s.peasantsCount; i++) {
+      const col = i % 6;
+      const row = Math.floor(i / 6);
+      const px = 96 + col * 38 + (row % 2) * 14 + chargeOffset;
+      const py = 222 + row * 18;
+      ctx.drawImage(frame, Math.floor(px), Math.floor(py));
+    }
+
+    // 우측 관아 바리케이드 & 돌파 진행도 바
+    ctx.fillStyle = '#f4ecdc';
+    ctx.font = 'bold 15px DungGeunMo, Galmuri9, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`고부 관아 방어선 (${s.hits}/${s.goal})`, 640, 165);
+
+    ctx.fillStyle = '#12151e';
+    ctx.fillRect(555, 174, 170, 16);
+    ctx.fillStyle = '#d9383a';
+    const remRatio = Math.max(0, (s.goal - s.hits) / s.goal);
+    ctx.fillRect(557, 176, Math.floor(166 * remRatio), 12);
+
+    // 바리케이드 말뚝
+    ctx.fillStyle = '#8c5828';
+    for (let b = 0; b < 4; b++) {
+      ctx.fillRect(575 + b * 14, 220 + (b % 2) * 6, 9, 58);
+      ctx.strokeStyle = '#12151e';
+      ctx.strokeRect(575 + b * 14, 220 + (b % 2) * 6, 9, 58);
+    }
+    for (let g = 0; g < 3; g++) {
+      ctx.drawImage(SPRITES.guard1, 622 + g * 30, 224 + g * 16);
+    }
+
+    // 타이밍 캐치 게이지 바 (너비 600px, 전장 하단)
+    const barX = 100;
+    const barY = 354;
+    const barW = 600;
+    const barH = 34;
+
+    ctx.fillStyle = '#0d1017';
+    ctx.fillRect(barX - 4, barY - 4, barW + 8, barH + 8);
+    ctx.fillStyle = '#632024';
+    ctx.fillRect(barX, barY, barW, barH);
+
+    const targetW = Math.max(16, Math.floor(barW * s.zoneWidth));
+    const targetX = barX + Math.floor((barW - targetW) / 2);
+    ctx.fillStyle = '#6ea32b';
+    ctx.fillRect(targetX, barY, targetW, barH);
+
+    const coreW = Math.max(7, Math.floor(targetW * 0.38));
+    ctx.fillStyle = '#e8c547';
+    ctx.fillRect(barX + Math.floor((barW - coreW) / 2), barY, coreW, barH);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(barX + barW / 2 - 1, barY, 2, barH);
+
+    const markerX = barX + Math.floor(s.cursor * barW);
+    ctx.fillStyle = '#fffdf7';
+    ctx.fillRect(markerX - 5, barY - 7, 10, barH + 14);
+    ctx.strokeStyle = '#12151e';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(markerX - 5, barY - 7, 10, barH + 14);
+
+    if (s.hitTimer > 0) {
+      ctx.font = 'bold 17px DungGeunMo, Galmuri9, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#0d1017';
+      ctx.fillText(s.hitFeedback, 402, 338);
+      ctx.fillStyle = s.hitColor;
+      ctx.fillText(s.hitFeedback, 400, 336);
+    }
+  }
+
+  /* ==========================================================================
+   * [STAGE 2] 황토현 전투 - 정읍: 미끼 유인 & 노출된 측면 매복 기습
+   * ========================================================================== */
+  function initStage2() {
+    const sc = getDiffConfig().s2;
+    game.s2 = {
+      lanesY: [115, 228, 342],
+      phase: 'LURE', // 'LURE' | 'AMBUSH'
+      enemyLane: 0,
+      flankLane: 1,
+      fakeLane: -1,
+      timer: sc.reactTime,
+      maxTimer: sc.reactTime,
+      ambushes: 0,
+      goal: sc.goal,
+      decoyX: 525,
+      enemyX: 625,
+      didMidSwitch: false
+    };
+    spawnStage2Encounter();
+  }
+
+  function spawnStage2Encounter() {
+    const s = game.s2;
+    const sc = getDiffConfig().s2;
+    const prevEnemy = s.enemyLane;
+    const candidates = [0, 1, 2].filter((l) => l !== prevEnemy);
+    s.enemyLane = candidates[Math.floor(Math.random() * candidates.length)];
+
+    const flankCandidates = [0, 1, 2].filter((l) => l !== s.enemyLane);
+    s.flankLane = flankCandidates[Math.floor(Math.random() * flankCandidates.length)];
+
+    const remaining = [0, 1, 2].find((l) => l !== s.enemyLane && l !== s.flankLane);
+    s.fakeLane = Math.random() < sc.fakeoutChance ? remaining : -1;
+
+    s.phase = 'LURE';
+    s.timer = sc.reactTime;
+    s.maxTimer = sc.reactTime;
+    s.enemyX = 625;
+    s.decoyX = 520;
+    s.didMidSwitch = false;
+  }
+
+  function actionStage2Lane(lane) {
+    if (game.mode !== 'PLAYING' || game.stageIndex !== 1) return;
+    const s = game.s2;
+    const sc = getDiffConfig().s2;
+    const ly = s.lanesY[lane];
+
+    if (s.phase === 'LURE') {
+      if (lane === s.enemyLane) {
+        s.phase = 'AMBUSH';
+        s.timer = sc.reactTime;
+        s.maxTimer = sc.reactTime;
+        audio.fire();
+        spawnParticles(s.decoyX, ly, ['#e8c547', '#eb7a28', '#d9383a'], 18, 120, 80);
+        spawnFloatingText(s.decoyX, ly - 32, '🔥 유인 성공! 빈틈 측면을 기습!', '#e8c547', 17);
+      } else {
+        damagePlayer('엉뚱한 길에 횃불을 밝혀 농민군 매복 위치가 탄로났습니다!', 280, ly);
+        if (game.mode === 'PLAYING') spawnStage2Encounter();
+      }
+    } else if (s.phase === 'AMBUSH') {
+      if (lane === s.flankLane) {
+        s.ambushes++;
+        addScore(220);
+        audio.slash();
+        audio.rally();
+        triggerShake(0.18, 5);
+        triggerFlash('#9ec83b', 0.22);
+        spawnParticles(420, ly, ['#f7f3e8', '#9ec83b', '#e8c547'], 24, 180, 180);
+        spawnFloatingText(420, ly - 26, `황토현 야습 성공! (${s.ambushes}/${s.goal})`, '#9ec83b', 19);
+        updateHUD();
+
+        if (s.ambushes >= s.goal) {
+          completeStage();
+        } else {
+          spawnStage2Encounter();
+        }
+      } else {
+        damagePlayer('교란 미끼에 속거나 정면으로 돌격해 역습을 당했습니다!', 280, ly);
+        if (game.mode === 'PLAYING') spawnStage2Encounter();
+      }
+    }
+  }
+
+  function updateStage2(dt) {
+    const s = game.s2;
+    const sc = getDiffConfig().s2;
+    s.timer -= dt;
+
+    // 불가능 난이도 특수 기믹: 유인/기습 도중 적 분대 경로 변경
+    if (
+      sc.multiSwitchChance > 0 &&
+      !s.didMidSwitch &&
+      s.timer < s.maxTimer * 0.56 &&
+      Math.random() < sc.multiSwitchChance * dt * 4
+    ) {
+      s.didMidSwitch = true;
+      if (s.phase === 'LURE') {
+        const alt = [0, 1, 2].filter((l) => l !== s.enemyLane);
+        s.enemyLane = alt[Math.floor(Math.random() * alt.length)];
+        const flankAlt = [0, 1, 2].filter((l) => l !== s.enemyLane);
+        s.flankLane = flankAlt[Math.floor(Math.random() * flankAlt.length)];
+        spawnFloatingText(580, s.lanesY[s.enemyLane] - 34, '⚡ 적 분대 경로 변경!', '#ff4d4f', 16);
+      } else if (s.phase === 'AMBUSH') {
+        const alt = [0, 1, 2].filter((l) => l !== s.enemyLane && l !== s.flankLane);
+        if (alt.length > 0) {
+          s.flankLane = alt[0];
+          spawnFloatingText(400, s.lanesY[s.flankLane] - 34, '⚡ 기습 측면 이동!', '#ff4d4f', 16);
+        }
+      }
+    }
+
+    if (s.phase === 'AMBUSH' && Math.random() < 0.3) {
+      spawnParticles(s.enemyX - 10, s.lanesY[s.enemyLane] - 4, ['#e8c547', '#eb7a28'], 2, 110, 20);
+    }
+
+    if (s.timer <= 0) {
+      const msg =
+        s.phase === 'LURE'
+          ? '횃불 유인이 늦어 전라 감영군이 진지를 돌파했습니다!'
+          : '야간 기습 타이밍을 놓쳐 감영군이 전열을 정비했습니다!';
+      damagePlayer(msg, 220, s.lanesY[s.enemyLane]);
+      if (game.mode === 'PLAYING') spawnStage2Encounter();
+    }
+
+    // 하단 3개 길 버튼의 시각 강조 동기화
+    for (let i = 0; i < 3; i++) {
+      const btn = game.canvasButtons[i];
+      if (!btn) continue;
+      if (s.phase === 'LURE' && i === s.enemyLane) {
+        btn.bg = '#e8c547';
+        btn.glowColor = '#fffdf7';
+      } else if (s.phase === 'AMBUSH' && i === s.flankLane) {
+        btn.bg = '#9ec83b';
+        btn.glowColor = '#fffdf7';
+      } else {
+        btn.bg = '#f4ecdc';
+        btn.glowColor = null;
+      }
+    }
+  }
+
+  function renderStage2() {
+    const s = game.s2;
+    renderCanvasTopBanner(
+      '미끼 유인 & 야습',
+      STAGES[1].summary,
+      `${s.ambushes} / ${s.goal} 기습`
+    );
+
+    ctx.fillStyle = '#0d1221';
+    ctx.fillRect(0, HUD_TOP_H, CANVAS_W, FIELD_BOT_Y - HUD_TOP_H);
+
+    // 초승달
+    ctx.fillStyle = '#f4ecdc';
+    ctx.beginPath();
+    ctx.arc(715, 72, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0d1221';
+    ctx.beginPath();
+    ctx.arc(707, 68, 15, 0, Math.PI * 2);
+    ctx.fill();
+
+    const laneNames = ['1. 상단 산길', '2. 중단 고갯길', '3. 하단 계곡길'];
+
+    for (let l = 0; l < 3; l++) {
+      const ly = s.lanesY[l];
+      const isEnemyLane = l === s.enemyLane;
+      const isFlankLane = s.phase === 'AMBUSH' && l === s.flankLane;
+      const isFakeLane = l === s.fakeLane && !isFlankLane && !isEnemyLane;
+
+      ctx.fillStyle = '#16241d';
+      ctx.fillRect(0, ly - 46, CANVAS_W, 92);
+
+      ctx.fillStyle = isFlankLane ? '#3c4d24' : '#3d2c1e';
+      ctx.fillRect(114, ly - 26, 686, 52);
+      ctx.fillStyle = isFlankLane ? '#546e2f' : '#523b28';
+      ctx.fillRect(114, ly - 19, 686, 38);
+
+      if ((s.phase === 'LURE' && isEnemyLane) || isFlankLane) {
+        ctx.strokeStyle = isFlankLane ? '#9ec83b' : '#e8c547';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(116, ly - 26, 680, 52);
+      }
+
+      // 좌측 수풀 속 농민군 매복 진지
+      ctx.fillStyle = '#203628';
+      ctx.fillRect(12, ly - 36, 104, 72);
+      ctx.drawImage(SPRITES.peasant1, 52, ly - 24);
+
+      ctx.fillStyle = '#c9b99f';
+      ctx.font = '14px DungGeunMo, Galmuri9, monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(laneNames[l], 126, ly - 30);
+
+      // 제한시간 타이머 바
+      if ((s.phase === 'LURE' && isEnemyLane) || isFlankLane) {
+        const ratio = Math.max(0, s.timer / s.maxTimer);
+        ctx.fillStyle = '#0d1017';
+        ctx.fillRect(280, ly - 40, 220, 11);
+        ctx.fillStyle = ratio < 0.35 ? '#ff4d4f' : isFlankLane ? '#9ec83b' : '#e8c547';
+        ctx.fillRect(282, ly - 38, Math.floor(216 * ratio), 7);
+      }
+
+      if (isEnemyLane) {
+        ctx.drawImage(SPRITES.guard1, s.enemyX - 14, ly - 24);
+        ctx.drawImage(SPRITES.guard1, s.enemyX + 18, ly - 16);
+
+        if (s.phase === 'LURE') {
+          ctx.fillStyle = '#e8c547';
+          ctx.font = 'bold 16px DungGeunMo, Galmuri9, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('🔥 1단계: 클릭해 횃불 유인!', 425, ly + 6);
+        } else {
+          ctx.fillStyle = 'rgba(232, 197, 71, 0.25)';
+          ctx.beginPath();
+          ctx.arc(s.decoyX + 18, ly, 42 + Math.sin(game.time * 20) * 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.drawImage(SPRITES.decoy, s.decoyX, ly - 22);
+          ctx.fillStyle = '#b8c2d6';
+          ctx.font = '14px DungGeunMo, Galmuri9, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('(미끼에 시선 집중됨)', 390, ly + 5);
+        }
+      }
+
+      if (isFlankLane) {
+        const chargeX = 175 + Math.sin(game.time * 16) * 16;
+        ctx.drawImage(SPRITES.peasant2, Math.floor(chargeX), ly - 22);
+        ctx.fillStyle = '#9ec83b';
+        ctx.font = 'bold 17px DungGeunMo, Galmuri9, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('⚡ 2단계: 빈틈 노출! 지금 클릭해 기습!', 455, ly + 6);
+      }
+
+      if (isFakeLane) {
+        ctx.fillStyle = '#ff7875';
+        ctx.font = '14px DungGeunMo, Galmuri9, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('❓ 허수아비 그림자 (함정!)', 455, ly + 5);
+      }
+    }
+  }
+
+  /* ==========================================================================
+   * [STAGE 3] 전남 장성 황룡강: 장태 내구도(HP) 방어 & 연타 돌격
+   * ========================================================================== */
+  function initStage3() {
+    const sc = getDiffConfig().s3;
+    game.s3 = {
+      wave: 1,
+      maxWaves: sc.waves,
+      mashes: 0,
+      mashesGoal: sc.mashesPerWave,
+      jangtaeHp: sc.jangtaeMaxHp,
+      jangtaeMaxHp: sc.jangtaeMaxHp,
+      jangtaeFlashTimer: 0,
+      phase: 'RELOAD', // 'WARN' | 'FIRE' | 'RELOAD'
+      phaseTimer: sc.reloadTime * 0.85,
+      bulletSpawnTimer: 0,
+      unblockedTime: 0,
+      bullets: [],
+      rollFrame: 0,
+      burstToggle: 0
+    };
+  }
+
+  function isStage3Defending() {
+    // 캔버스 내부 [장태 방어] 버튼 홀드, 전장 직접 홀드, 또는 스페이스바 홀드 모두 방어 인정
+    return isCanvasBtnHeld('s3_defend') || isCanvasBtnHeld('field') || game.keys.space;
+  }
+
+  function actionStage3Tap() {
+    if (game.mode !== 'PLAYING' || game.stageIndex !== 2) return;
+    const s = game.s3;
+    const sc = getDiffConfig().s3;
+    if (s.phase === 'RELOAD') {
+      s.mashes++;
+      s.rollFrame++;
+      addScore(25);
+      audio.slash();
+
+      const waveRatio = Math.min(1, s.mashes / s.mashesGoal);
+      const jangtaeX = 135 + waveRatio * 345;
+      spawnParticles(jangtaeX + 48, 255, ['#e8c547', '#d49b4b', '#f7f3e8'], 7, 115, 170);
+      spawnFloatingText(jangtaeX + 26, 185, `장태 전진! (${s.mashes}/${s.mashesGoal})`, '#9ec83b', 16);
+      updateHUD();
+
+      if (s.mashes >= s.mashesGoal) {
+        audio.explosion();
+        triggerShake(0.24, 6);
+        spawnParticles(600, 250, ['#e8c547', '#d9383a', '#f7f3e8'], 28, 210, 230);
+
+        if (s.wave < s.maxWaves) {
+          s.wave++;
+          s.mashes = 0;
+          s.phase = 'WARN';
+          s.phaseTimer = sc.warnTime;
+          // 웨이브 돌파 시 농민군들이 짚단을 보충해 장태 내구도 소폭 수리
+          const prevHp = s.jangtaeHp;
+          s.jangtaeHp = Math.min(s.jangtaeMaxHp, s.jangtaeHp + sc.waveRepair);
+          const repaired = s.jangtaeHp - prevHp;
+          spawnFloatingText(
+            400,
+            150,
+            repaired > 0
+              ? `경군 제${s.wave}진 출현! (장태 보수 +${repaired} HP)`
+              : `경군 제${s.wave}진 출현! 방어 준비!`,
+            '#e8c547',
+            19
+          );
+        } else {
+          completeStage();
+        }
+      }
+    }
+  }
+
+  function updateStage3(dt) {
+    const s = game.s3;
+    const sc = getDiffConfig().s3;
+    const isDefending = isStage3Defending();
+    s.phaseTimer -= dt;
+    if (s.jangtaeFlashTimer > 0) s.jangtaeFlashTimer = Math.max(0, s.jangtaeFlashTimer - dt);
+
+    // 캔버스 내부 두 버튼의 시각적 강조 갱신
+    const btnDef = game.canvasButtons[0];
+    const btnPush = game.canvasButtons[1];
+    if (btnDef && btnPush) {
+      if (s.phase === 'WARN' || s.phase === 'FIRE') {
+        btnDef.bg = isDefending ? '#9ec83b' : '#e8c547';
+        btnDef.fg = '#12151e';
+        btnDef.glowColor = '#fffdf7';
+        btnPush.bg = '#383e4d';
+        btnPush.fg = '#9ea7b3';
+        btnPush.glowColor = null;
+      } else {
+        btnDef.bg = '#2b3e59';
+        btnDef.fg = '#d0d7e6';
+        btnDef.glowColor = null;
+        btnPush.bg = '#d9383a';
+        btnPush.fg = '#fff9f0';
+        btnPush.glowColor = '#e8c547';
+      }
+    }
+
+    if (s.phase === 'RELOAD') {
+      if (s.phaseTimer <= 0) {
+        if (s.mashes > 0 && sc.pushbackRate > 0) {
+          const loss = Math.floor(s.mashesGoal * sc.pushbackRate);
+          s.mashes = Math.max(0, s.mashes - loss);
+        }
+        s.phase = 'WARN';
+        s.phaseTimer = sc.warnTime;
+        audio.gunfire();
+      }
+    } else if (s.phase === 'WARN') {
+      if (s.phaseTimer <= 0) {
+        s.phase = 'FIRE';
+        s.phaseTimer = sc.burstVolley ? 2.25 : sc.doubleVolley ? 2.0 : 1.75;
+        s.bulletSpawnTimer = 0.04;
+        s.unblockedTime = 0;
+      }
+    } else if (s.phase === 'FIRE') {
+      s.burstToggle += dt;
+      s.bulletSpawnTimer -= dt;
+
+      const isFiringBurst = sc.burstVolley
+        ? Math.sin(s.burstToggle * 13) > -0.35
+        : sc.doubleVolley
+          ? Math.sin(s.burstToggle * 9) > -0.2
+          : true;
+
+      if (isFiringBurst && s.bulletSpawnTimer <= 0) {
+        s.bulletSpawnTimer = sc.bulletInterval;
+        s.bullets.push({
+          x: 605,
+          y: 235 + (Math.random() * 28 - 14),
+          vx: sc.burstVolley ? -720 : -600,
+          vy: (Math.random() - 0.5) * 28
+        });
+        audio.gunfire();
+      }
+
+      if (!isDefending) {
+        s.unblockedTime += dt;
+        const grace = getDiffConfig().isExtreme ? 0.16 : 0.34;
+        if (s.unblockedTime >= grace) {
+          s.unblockedTime = -99; // 한 사격 턴당 1회 직접 피격
+          damagePlayer('장태 뒤에 몸을 숨기지 않아 경군의 일제 사격에 피격되었습니다!', 190, 250);
+          if (game.mode !== 'PLAYING') return;
+        }
+      }
+
+      if (s.phaseTimer <= 0) {
+        s.phase = 'RELOAD';
+        s.phaseTimer = sc.reloadTime;
+      }
+    }
+
+    // 탄환 이동 및 장태 튕겨내기 (장태 내구도 차감 포함)
+    const waveRatio = Math.min(1, s.mashes / s.mashesGoal);
+    const jangtaeX = 135 + waveRatio * 345;
+
+    for (let i = s.bullets.length - 1; i >= 0; i--) {
+      const b = s.bullets[i];
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+
+      if (isDefending && b.x <= jangtaeX + 58 && b.x >= jangtaeX - 4) {
+        s.bullets.splice(i, 1);
+        addScore(10);
+        audio.deflect();
+        s.jangtaeHp = Math.max(0, s.jangtaeHp - sc.bulletDmg);
+        s.jangtaeFlashTimer = 0.14;
+        spawnParticles(jangtaeX + 52, b.y, ['#e8c547', '#d49b4b', '#fffdf7'], 6, 165, 250);
+        spawnFloatingText(jangtaeX + 46, b.y - 18, `팅! -${sc.bulletDmg}`, '#e8c547', 14);
+
+        // 장태 내구도(HP)가 0이 되면 장태 파손 -> 사기 -1♥ 및 예비 장태 투입
+        if (s.jangtaeHp <= 0) {
+          audio.shatter();
+          s.bullets = []; // 파손 충격파로 잔여 탄환 초기화
+          spawnParticles(jangtaeX + 28, 250, ['#d49b4b', '#8c5828', '#e8c547', '#f7f3e8'], 32, 230, 260);
+          spawnFloatingText(jangtaeX + 28, 195, '💥 장태 내구도 소진! 파손!', '#ff4d4f', 19);
+          damagePlayer('장태가 경군의 집중 사격을 버티지 못하고 산산조각 났습니다!', jangtaeX + 28, 250);
+          if (game.mode !== 'PLAYING') return;
+
+          // 사기가 남아있다면 예비 장태 투입
+          s.jangtaeHp = s.jangtaeMaxHp;
+          spawnFloatingText(jangtaeX + 28, 170, '🛡️ 예비 장태 긴급 투입!', '#9ec83b', 17);
+          break;
+        }
+      } else if (b.x < 75) {
+        s.bullets.splice(i, 1);
+      }
+    }
+  }
+
+  function renderStage3() {
+    const s = game.s3;
+    const isDefending = isStage3Defending();
+
+    renderCanvasTopBanner(
+      '장태 방어 & 돌격',
+      STAGES[2].summary,
+      `${s.wave}/${s.maxWaves}파 (${s.mashes}/${s.mashesGoal})`
+    );
+
+    // 전남 장성 황룡강 배경
+    const sky = ctx.createLinearGradient(0, HUD_TOP_H, 0, 245);
+    sky.addColorStop(0, '#3e5c76');
+    sky.addColorStop(1, '#b8ccb8');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, HUD_TOP_H, CANVAS_W, 201);
+
+    // 황룡강 강물
+    ctx.fillStyle = '#2d5a78';
+    ctx.fillRect(0, 218, CANVAS_W, 38);
+    ctx.fillStyle = '#6da4bf';
+    for (let w = 0; w < 12; w++) {
+      const wx = ((w * 72 + game.time * 36) % (CANVAS_W + 30)) - 20;
+      ctx.fillRect(wx, 228 + (w % 2) * 10, 32, 3);
+    }
+
+    // 황토 강변
+    ctx.fillStyle = '#7c5532';
+    ctx.fillRect(0, 256, CANVAS_W, FIELD_BOT_Y - 256);
+    ctx.fillStyle = '#6ea32b';
+    ctx.fillRect(0, 252, CANVAS_W, 9);
+
+    // 좌측 상단: 장태 내구도(HP) 전용 HUD 카드
+    const hpRatio = Math.max(0, s.jangtaeHp / s.jangtaeMaxHp);
+    const hpColor = hpRatio > 0.5 ? '#9ec83b' : hpRatio > 0.25 ? '#e8c547' : '#ff4d4f';
+
+    ctx.fillStyle = 'rgba(13, 16, 23, 0.88)';
+    ctx.fillRect(16, 56, 252, 54);
+    ctx.strokeStyle = hpColor;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(16, 56, 252, 54);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#f4ecdc';
+    ctx.font = 'bold 14px DungGeunMo, Galmuri9, monospace';
+    ctx.fillText(`🛡️ 장태 내구도: ${s.jangtaeHp} / ${s.jangtaeMaxHp}`, 26, 76);
+
+    ctx.fillStyle = '#252c3d';
+    ctx.fillRect(26, 84, 232, 16);
+    ctx.fillStyle = hpColor;
+    ctx.fillRect(28, 86, Math.floor(228 * hpRatio), 12);
+
+    // 우측 상단: 웨이브 돌파 게이지
+    const waveRatio = Math.min(1, s.mashes / s.mashesGoal);
+    ctx.fillStyle = 'rgba(13, 16, 23, 0.88)';
+    ctx.fillRect(464, 56, 320, 54);
+    ctx.strokeStyle = '#e8c547';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(464, 56, 320, 54);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#e8c547';
+    ctx.font = 'bold 14px DungGeunMo, Galmuri9, monospace';
+    ctx.fillText(`⚔️ 황룡강 제${s.wave}/${s.maxWaves}진 돌파 (${s.mashes}/${s.mashesGoal})`, 476, 76);
+
+    ctx.fillStyle = '#252c3d';
+    ctx.fillRect(476, 84, 296, 16);
+    ctx.fillStyle = '#6ea32b';
+    ctx.fillRect(478, 86, Math.floor(292 * waveRatio), 12);
+
+    // 농민군 & 거대 대나무 장태
+    const jangtaeX = 135 + waveRatio * 345;
+    const jtSprite = Math.floor(s.rollFrame) % 2 === 0 ? SPRITES.jangtae1 : SPRITES.jangtae2;
+    const pSprite = Math.floor(game.time * 8) % 2 === 0 ? SPRITES.peasant1 : SPRITES.peasant2;
+
+    const crouchY = isDefending ? 248 : 236;
+    ctx.drawImage(pSprite, Math.floor(jangtaeX - 30), crouchY);
+    ctx.drawImage(pSprite, Math.floor(jangtaeX - 10), crouchY + 8);
+    ctx.drawImage(jtSprite, Math.floor(jangtaeX), 232);
+
+    // 피격 시 장태 하얀 섬광 테두리
+    if (s.jangtaeFlashTimer > 0) {
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(Math.floor(jangtaeX), 232, 56, 52);
+    }
+
+    // 장태 머리 위 실시간 내구도(HP) 미니 게이지 바
+    const miniBarX = Math.floor(jangtaeX - 6);
+    const miniBarY = 212;
+    ctx.fillStyle = '#0d1017';
+    ctx.fillRect(miniBarX, miniBarY, 68, 12);
+    ctx.fillStyle = hpColor;
+    ctx.fillRect(miniBarX + 2, miniBarY + 2, Math.floor(64 * hpRatio), 8);
+
+    if (isDefending) {
+      ctx.strokeStyle = '#e8c547';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(jangtaeX + 36, 258, 38, -Math.PI * 0.45, Math.PI * 0.45);
+      ctx.stroke();
+    }
+
+    // 우측 중앙 경군 & 회선포(기관포)
+    ctx.fillStyle = '#2b3e59';
+    ctx.fillRect(622, 246, 44, 16);
+    ctx.fillStyle = '#9ea7b3';
+    ctx.fillRect(598, 248, 28, 11);
+    ctx.fillStyle = '#12151e';
+    ctx.beginPath();
+    ctx.arc(644, 270, 14, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.drawImage(SPRITES.rifleman, 665, 234);
+    ctx.drawImage(SPRITES.rifleman, 702, 242);
+
+    // 중앙 전술 페이즈 경고 배너
+    ctx.textAlign = 'center';
+    if (s.phase === 'WARN') {
+      ctx.fillStyle = '#ff4d4f';
+      ctx.font = 'bold 22px DungGeunMo, Galmuri9, monospace';
+      ctx.fillText('⚠️ 경군 조준 (!)! 지금 [장태 방어]를 꾹 누르세요!', 400, 145);
+    } else if (s.phase === 'FIRE') {
+      ctx.fillStyle = isDefending ? '#9ec83b' : '#ff4d4f';
+      ctx.font = 'bold 22px DungGeunMo, Galmuri9, monospace';
+      ctx.fillText(
+        isDefending ? '🛡️ 장태 방어 중! 총탄을 튕겨내고 있습니다!' : '💥 총탄이 쏟아집니다! 떼지 말고 꾹 누르세요!',
+        400,
+        145
+      );
+    } else {
+      ctx.fillStyle = '#e8c547';
+      ctx.font = 'bold 22px DungGeunMo, Galmuri9, monospace';
+      ctx.fillText('🔥 경군 재장전 중! [장태 돌격]을 빠르게 연타하세요!', 400, 145);
+    }
+
+    // 날아오는 탄환 렌더링
+    ctx.fillStyle = '#fffdf7';
+    for (const b of s.bullets) {
+      ctx.fillRect(Math.floor(b.x), Math.floor(b.y), 12, 3);
+    }
+  }
+
+  /* ==========================================================================
+   * [STAGE 4] 전주성 입성 & 전주화약: 탄막 회피 & 제한된 불화살 성문 화공
+   * ========================================================================== */
+  function initStage4() {
+    const sc = getDiffConfig().s4;
+    game.s4 = {
+      cartX: 400,
+      cartSpeed: 340,
+      reticleX: 400,
+      reticleDir: 1,
+      reticleSpeed: sc.reticleSpeed,
+      weakpointHalf: sc.weakpointHalf,
+      hits: 0,
+      goal: sc.goal,
+      arrowsLeft: sc.maxArrows,
+      maxArrows: sc.maxArrows,
+      fireCooldown: 0,
+      bombs: [],
+      arrows: [],
+      bombSpawnTimer: 0.75
+    };
+  }
+
+  function actionStage4Fire() {
+    if (game.mode !== 'PLAYING' || game.stageIndex !== 3) return;
+    const s = game.s4;
+    if (s.fireCooldown > 0 || s.arrowsLeft <= 0) return;
+
+    s.arrowsLeft--;
+    s.fireCooldown = 0.36;
+    audio.fire();
+
+    const lockedTargetX = s.reticleX;
+    const isWeakpointHit = Math.abs(lockedTargetX - 400) <= s.weakpointHalf;
+
+    s.arrows.push({
+      x: s.cartX,
+      y: 350,
+      targetX: lockedTargetX,
+      targetY: 138,
+      isHit: isWeakpointHit
+    });
+  }
+
+  function updateStage4(dt) {
+    const s = game.s4;
+    const sc = getDiffConfig().s4;
+    if (s.fireCooldown > 0) s.fireCooldown = Math.max(0, s.fireCooldown - dt);
+
+    // 캔버스 내부 [◀ 좌이동] / [우이동 ▶] 홀드 또는 키보드 방향키 이동
+    const moveLeft = game.keys.left || isCanvasBtnHeld('s4_left');
+    const moveRight = game.keys.right || isCanvasBtnHeld('s4_right');
+
+    if (moveLeft) s.cartX -= s.cartSpeed * dt;
+    if (moveRight) s.cartX += s.cartSpeed * dt;
+    s.cartX = Math.max(65, Math.min(735, s.cartX));
+
+    // 성문 위 조준선 왕복 이동
+    s.reticleX += s.reticleDir * s.reticleSpeed * dt;
+    if (s.reticleX >= 565) {
+      s.reticleX = 565;
+      s.reticleDir = -1;
+    } else if (s.reticleX <= 235) {
+      s.reticleX = 235;
+      s.reticleDir = 1;
+    }
+
+    // 캔버스 내부 [🔥 불화살 발사!] 버튼에 잔여 탄환 수 실시간 반영
+    const fireBtn = game.canvasButtons[2];
+    if (fireBtn) {
+      fireBtn.label = `🔥 불화살 발사 (${s.arrowsLeft}/${s.maxArrows}발)`;
+      fireBtn.disabled = s.arrowsLeft <= 0;
+    }
+
+    // 성벽 포탄 낙하 생성 (공정한 안전 통로 보장)
+    s.bombSpawnTimer -= dt;
+    if (s.bombSpawnTimer <= 0) {
+      const safeCorridorX = 110 + Math.random() * 580;
+      const count = sc.burstCount;
+
+      for (let k = 0; k < count; k++) {
+        let tx;
+        if (k === 0 && Math.random() < sc.aimedRatio) {
+          tx = Math.max(65, Math.min(735, s.cartX + (Math.random() * 80 - 40)));
+        } else {
+          tx = 65 + Math.random() * 670;
+        }
+        if (Math.abs(tx - safeCorridorX) < 48) {
+          tx = safeCorridorX > 400 ? safeCorridorX - 78 : safeCorridorX + 78;
+          tx = Math.max(65, Math.min(735, tx));
+        }
+
+        s.bombs.push({
+          x: tx,
+          y: 112,
+          targetY: 372,
+          fallTime: sc.bombFallTime + k * 0.08,
+          maxFallTime: sc.bombFallTime + k * 0.08,
+          isFirebomb: k > 0
+        });
+      }
+      s.bombSpawnTimer = sc.spawnInterval;
+    }
+
+    // 낙하 포탄 업데이트
+    for (let i = s.bombs.length - 1; i >= 0; i--) {
+      const b = s.bombs[i];
+      b.fallTime -= dt;
+      const ratio = 1 - Math.max(0, b.fallTime / b.maxFallTime);
+      b.y = 112 + ratio * (b.targetY - 112);
+
+      if (b.fallTime <= 0) {
+        s.bombs.splice(i, 1);
+        audio.explosion();
+        spawnParticles(b.x, b.targetY, ['#d9383a', '#eb7a28', '#8c5828'], 14, 140, 200);
+        if (Math.abs(b.x - s.cartX) <= 36) {
+          damagePlayer('전주성 성벽에서 쏟아진 포탄에 화차가 파손되었습니다!', s.cartX, 360);
+          if (game.mode !== 'PLAYING') return;
+        }
+      }
+    }
+
+    // 발사된 화차 불화살 업데이트
+    for (let i = s.arrows.length - 1; i >= 0; i--) {
+      const a = s.arrows[i];
+      const dx = a.targetX - a.x;
+      const dy = a.targetY - a.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist <= 24) {
+        s.arrows.splice(i, 1);
+        if (a.isHit) {
+          s.hits++;
+          addScore(280);
+          audio.explosion();
+          triggerShake(0.24, 6);
+          triggerFlash('#e8c547', 0.22);
+          spawnParticles(400, 138, ['#e8c547', '#eb7a28', '#d9383a'], 26, 190, 180);
+          spawnFloatingText(400, 102, `성문 약점 명중! (${s.hits}/${s.goal})`, '#e8c547', 20);
+          updateHUD();
+
+          if (s.hits >= s.goal) {
+            completeStage();
+            return;
+          }
+        } else {
+          spawnParticles(a.targetX, a.targetY, ['#9ea7b3', '#e8c547'], 10, 100, 160);
+          spawnFloatingText(a.targetX, a.targetY - 16, '성벽 돌담에 빗나감!', '#d8ceb8', 16);
+        }
+      } else {
+        a.x += (dx / dist) * 740 * dt;
+        a.y += (dy / dist) * 740 * dt;
+        spawnParticles(a.x, a.y, ['#e8c547', '#d9383a'], 1, 30, 0);
+      }
+    }
+
+    // 탄환 소진(또는 남은 탄환으로 목표 명중 불가) 패배 판정
+    const neededHits = s.goal - s.hits;
+    if (neededHits > 0 && s.arrows.length === 0 && s.arrowsLeft < neededHits) {
+      triggerGameOver(
+        s.arrowsLeft === 0
+          ? `불화살 ${s.maxArrows}발을 모두 소진하여 전주성 성문을 돌파하지 못했습니다! (${s.hits}/${s.goal} 명중)`
+          : `남은 불화살(${s.arrowsLeft}발)로는 성문 내구도(${neededHits}회 추가 명중 필요)를 돌파할 수 없습니다!`
+      );
+    }
+  }
+
+  function renderStage4() {
+    const s = game.s4;
+    renderCanvasTopBanner(
+      '탄막 회피 & 불화살',
+      STAGES[3].summary,
+      `성문 ${s.hits}/${s.goal} · 탄환 ${s.arrowsLeft}발`
+    );
+
+    // 전주성 밤하늘 배경
+    ctx.fillStyle = '#1b2438';
+    ctx.fillRect(0, HUD_TOP_H, CANVAS_W, 146);
+
+    // 성벽 석축
+    ctx.fillStyle = '#5e5c57';
+    ctx.fillRect(0, 104, CANVAS_W, 86);
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 20; col++) {
+        ctx.strokeStyle = '#2d2b28';
+        ctx.strokeRect(col * 40 + (row % 2) * 20, 104 + row * 21, 40, 21);
+      }
+    }
+
+    // 풍남문 누각
+    ctx.fillStyle = '#151a24';
+    ctx.beginPath();
+    ctx.moveTo(275, 104);
+    ctx.lineTo(320, 52);
+    ctx.lineTo(480, 52);
+    ctx.lineTo(525, 104);
+    ctx.fill();
+    ctx.fillStyle = '#d9383a';
+    ctx.fillRect(334, 74, 132, 30);
+    ctx.fillStyle = '#e8c547';
+    ctx.font = 'bold 16px DungGeunMo, Galmuri9, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('전 주 성', 400, 95);
+
+    // 성문 & 난이도별 약점 표적
+    ctx.fillStyle = '#4f3018';
+    ctx.fillRect(330, 108, 140, 82);
+    ctx.strokeStyle = '#12151e';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(330, 108, 140, 82);
+
+    const wpW = s.weakpointHalf * 2;
+    ctx.fillStyle = 'rgba(232, 197, 71, 0.38)';
+    ctx.fillRect(400 - s.weakpointHalf, 114, wpW, 52);
+    ctx.strokeStyle = '#e8c547';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(400 - s.weakpointHalf, 114, wpW, 52);
+
+    ctx.fillStyle = '#e8c547';
+    ctx.font = '13px DungGeunMo, Galmuri9, monospace';
+    ctx.fillText('약점', 400, 145);
+
+    // 성 앞 광장
+    ctx.fillStyle = '#735638';
+    ctx.fillRect(0, 190, CANVAS_W, FIELD_BOT_Y - 190);
+
+    // 좌측 상단: 불화살 탄환 잔량 HUD 박스
+    const neededHits = s.goal - s.hits;
+    const isZeroMargin = s.arrowsLeft <= neededHits;
+    ctx.fillStyle = 'rgba(13, 16, 23, 0.9)';
+    ctx.fillRect(14, 54, 248, 66);
+    ctx.strokeStyle = isZeroMargin ? '#ff4d4f' : '#e8c547';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(14, 54, 248, 66);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = isZeroMargin ? '#ff7875' : '#e8c547';
+    ctx.font = 'bold 14px DungGeunMo, Galmuri9, monospace';
+    ctx.fillText(`🏹 남은 불화살: ${s.arrowsLeft} / ${s.maxArrows}발`, 24, 74);
+
+    // 픽셀 화살 아이콘 배열 시각화
+    for (let a = 0; a < s.maxArrows; a++) {
+      const ax = 26 + a * 22;
+      const ay = 84;
+      const isAvail = a < s.arrowsLeft;
+      ctx.fillStyle = isAvail ? '#d9383a' : '#2d3342';
+      ctx.fillRect(ax + 4, ay, 6, 6);
+      ctx.fillStyle = isAvail ? '#e8c547' : '#3e4659';
+      ctx.fillRect(ax + 5, ay + 6, 4, 18);
+      ctx.fillStyle = isAvail ? '#f4ecdc' : '#2d3342';
+      ctx.fillRect(ax + 3, ay + 20, 8, 4);
+    }
+
+    // 우측 상단: 성문 내구도 & 여유 탄환 경고
+    ctx.fillStyle = 'rgba(13, 16, 23, 0.9)';
+    ctx.fillRect(548, 54, 238, 66);
+    ctx.strokeStyle = '#9ec83b';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(548, 54, 238, 66);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#9ec83b';
+    ctx.font = 'bold 14px DungGeunMo, Galmuri9, monospace';
+    ctx.fillText(`🏯 성문 돌파: ${s.hits} / ${s.goal}회`, 560, 74);
+    ctx.fillStyle = isZeroMargin ? '#ff4d4f' : '#d0d7e6';
+    ctx.font = '13px DungGeunMo, Galmuri9, monospace';
+    ctx.fillText(
+      isZeroMargin ? '⚠️ 탄환 여유 없음! 신중 발사!' : `남은 탄환 여유: +${s.arrowsLeft - neededHits}발`,
+      560,
+      98
+    );
+
+    // 움직이는 조준선
+    const onTarget = Math.abs(s.reticleX - 400) <= s.weakpointHalf;
+    ctx.strokeStyle = onTarget ? '#9ec83b' : '#ff4d4f';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(Math.floor(s.reticleX), 138, 17, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(Math.floor(s.reticleX) - 24, 138);
+    ctx.lineTo(Math.floor(s.reticleX) + 24, 138);
+    ctx.moveTo(Math.floor(s.reticleX), 114);
+    ctx.lineTo(Math.floor(s.reticleX), 162);
+    ctx.stroke();
+
+    // 떨어지는 포탄 경고 원 & 포탄
+    for (const b of s.bombs) {
+      const progress = 1 - Math.max(0, b.fallTime / b.maxFallTime);
+      ctx.strokeStyle = `rgba(217, 56, 58, ${0.4 + progress * 0.6})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(b.x, b.targetY + 8, 24 * progress + 6, 9 * progress + 3, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = b.isFirebomb ? '#d9383a' : '#12151e';
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#e8c547';
+      ctx.fillRect(b.x - 3, b.y - 14, 6, 5);
+    }
+
+    // 날아가는 불화살
+    for (const a of s.arrows) {
+      ctx.fillStyle = '#e8c547';
+      ctx.fillRect(Math.floor(a.x) - 4, Math.floor(a.y) - 10, 8, 22);
+      ctx.fillStyle = '#d9383a';
+      ctx.fillRect(Math.floor(a.x) - 3, Math.floor(a.y) - 15, 6, 7);
+    }
+
+    // 하단 농민 화차 부대
+    ctx.drawImage(SPRITES.fireCart, Math.floor(s.cartX) - 21, 354);
+    ctx.drawImage(SPRITES.peasant1, Math.floor(s.cartX) - 46, 350);
+    ctx.drawImage(SPRITES.peasant2, Math.floor(s.cartX) + 24, 350);
+  }
+
+  /* --------------------------------------------------------------------------
+   * 10. 타이틀 배경 픽셀 애니메이션 렌더링
+   * -------------------------------------------------------------------------- */
+  function renderTitleScene() {
+    const grad = ctx.createLinearGradient(0, 0, 0, 365);
+    grad.addColorStop(0, '#141726');
+    grad.addColorStop(0.55, '#6e2d2c');
+    grad.addColorStop(1, '#d9883b');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, CANVAS_W, 365);
+
+    ctx.fillStyle = '#f5cf64';
+    ctx.beginPath();
+    ctx.arc(400, 225, 72, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#2b1b1d';
+    ctx.beginPath();
+    ctx.moveTo(0, 365);
+    ctx.lineTo(150, 250);
+    ctx.lineTo(310, 315);
+    ctx.lineTo(510, 225);
+    ctx.lineTo(680, 300);
+    ctx.lineTo(800, 255);
+    ctx.lineTo(800, 365);
+    ctx.fill();
+
+    ctx.fillStyle = '#181214';
+    ctx.fillRect(0, 355, CANVAS_W, 165);
+
+    const frame = Math.floor(game.time * 5) % 2 === 0 ? SPRITES.peasant1 : SPRITES.peasant2;
+    for (let i = 0; i < 9; i++) {
+      const mx = ((i * 94 + game.time * 46) % (CANVAS_W + 60)) - 50;
+      const my = 315 + (i % 2) * 12;
+      ctx.drawImage(frame, Math.floor(mx), my);
+
+      if (i === 2 || i === 6) {
+        ctx.fillStyle = '#0c0a0b';
+        ctx.fillRect(Math.floor(mx) + 12, my - 52, 3, 58);
+        const sway = Math.sin(game.time * 5 + i) * 2;
+        ctx.fillStyle = '#f4ecdc';
+        ctx.fillRect(Math.floor(mx) + 15, my - 50 + sway, 62, 28);
+        ctx.fillStyle = '#d9383a';
+        ctx.font = '12px DungGeunMo, Galmuri9, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('보국안민', Math.floor(mx) + 46, my - 31 + sway);
+      }
+    }
+  }
+
+  /* --------------------------------------------------------------------------
+   * 11. 메인 게임 루프
+   * -------------------------------------------------------------------------- */
+  let lastTimestamp = 0;
+
+  function gameLoop(timestamp) {
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    const dt = Math.min(0.05, (timestamp - lastTimestamp) / 1000);
+    lastTimestamp = timestamp;
+    game.time += dt;
+
+    updateEffects(dt);
+    if (game.mode === 'PLAYING') {
+      if (game.stageIndex === 0) updateStage1(dt);
+      else if (game.stageIndex === 1) updateStage2(dt);
+      else if (game.stageIndex === 2) updateStage3(dt);
+      else if (game.stageIndex === 3) updateStage4(dt);
+    }
+
+    ctx.save();
+    if (game.shakeTime > 0) {
+      const dx = (Math.random() * 2 - 1) * game.shakeIntensity;
+      const dy = (Math.random() * 2 - 1) * game.shakeIntensity;
+      ctx.translate(Math.floor(dx), Math.floor(dy));
+    }
+
+    if (game.mode === 'TITLE') {
+      renderTitleScene();
+    } else {
+      if (game.stageIndex === 0) renderStage1();
+      else if (game.stageIndex === 1) renderStage2();
+      else if (game.stageIndex === 2) renderStage3();
+      else if (game.stageIndex === 3) renderStage4();
+
+      // 캔버스 내부 하단 컨트롤 데크 & 버튼 렌더링
+      renderControlDeckFrame();
+      for (const btn of game.canvasButtons) {
+        drawPixelButton(btn);
+      }
+
+      renderEffects();
+
+      // 스테이지 돌입 배너
+      if (game.mode === 'PLAYING' && game.bannerTimer > 0) {
+        const st = STAGES[game.stageIndex];
+        const cfg = getDiffConfig();
+        ctx.fillStyle = 'rgba(13, 16, 23, 0.9)';
+        ctx.fillRect(145, 175, 510, 92);
+        ctx.strokeStyle = cfg.isExtreme ? '#d9383a' : '#9ec83b';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(145, 175, 510, 92);
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = cfg.isExtreme ? '#ff4d4f' : '#e8c547';
+        ctx.font = 'bold 22px DungGeunMo, Galmuri9, monospace';
+        ctx.fillText(`제${st.id}전투: ${st.title} [${cfg.label}]`, 400, 212);
+        ctx.fillStyle = '#f4ecdc';
+        ctx.font = '15px DungGeunMo, Galmuri9, monospace';
+        ctx.fillText(st.dateLocation, 400, 244);
+      }
+    }
+
+    ctx.restore();
+    requestAnimationFrame(gameLoop);
+  }
+
+  /* --------------------------------------------------------------------------
+   * 12. 캔버스 내부 멀티터치·마우스·키보드 입력 핸들러
+   * -------------------------------------------------------------------------- */
+  function getCanvasLogicalPos(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: ((clientX - rect.left) / rect.width) * CANVAS_W,
+      y: ((clientY - rect.top) / rect.height) * CANVAS_H
+    };
+  }
+
+  function findHitCanvasButton(pos) {
+    for (const btn of game.canvasButtons) {
+      if (pos.x >= btn.x && pos.x <= btn.x + btn.w && pos.y >= btn.y && pos.y <= btn.y + btn.h) {
+        return btn;
+      }
+    }
+    return null;
+  }
+
+  canvas.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    audio.init();
+    if (canvas.setPointerCapture) {
+      try {
+        canvas.setPointerCapture(e.pointerId);
+      } catch (_) {}
+    }
+
+    if (game.mode !== 'PLAYING') return;
+    const pos = getCanvasLogicalPos(e.clientX, e.clientY);
+
+    // 1) 먼저 캔버스 내부 하단 컨트롤 데크 버튼 히트 체크
+    const hitBtn = findHitCanvasButton(pos);
+    if (hitBtn) {
+      game.activePointers.set(e.pointerId, { x: pos.x, y: pos.y, btnId: hitBtn.id });
+      if (hitBtn.onDown) hitBtn.onDown();
+      return;
+    }
+
+    // 2) 상단 전장 영역 직접 클릭/터치 처리
+    game.activePointers.set(e.pointerId, { x: pos.x, y: pos.y, btnId: 'field' });
+    if (pos.y >= HUD_TOP_H && pos.y < FIELD_BOT_Y) {
+      if (game.stageIndex === 0) {
+        actionStage1();
+      } else if (game.stageIndex === 1) {
+        let lane = 1;
+        if (pos.y < 170) lane = 0;
+        else if (pos.y < 285) lane = 1;
+        else lane = 2;
+        actionStage2Lane(lane);
+      } else if (game.stageIndex === 2) {
+        actionStage3Tap();
+      } else if (game.stageIndex === 3) {
+        game.s4.cartX = Math.max(65, Math.min(735, pos.x));
+        actionStage4Fire();
+      }
+    }
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
+    if (!game.activePointers.has(e.pointerId)) return;
+    const info = game.activePointers.get(e.pointerId);
+    const pos = getCanvasLogicalPos(e.clientX, e.clientY);
+    info.x = pos.x;
+    info.y = pos.y;
+
+    // 하단 버튼 영역에서 손가락이 다른 버튼으로 슬라이드할 때 좌/우 버튼 상태 자연스럽게 갱신
+    if (info.btnId && info.btnId !== 'field') {
+      const hitBtn = findHitCanvasButton(pos);
+      if (hitBtn && (hitBtn.id === 's4_left' || hitBtn.id === 's4_right')) {
+        info.btnId = hitBtn.id;
+      }
+    } else if (info.btnId === 'field' && game.mode === 'PLAYING' && game.stageIndex === 3) {
+      game.s4.cartX = Math.max(65, Math.min(735, pos.x));
+    }
+  });
+
+  function releasePointer(e) {
+    game.activePointers.delete(e.pointerId);
+  }
+
+  canvas.addEventListener('pointerup', releasePointer);
+  canvas.addEventListener('pointercancel', releasePointer);
+
+  // 키보드 지원 (방향키/A/D, 스페이스바, 1/2/3)
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'A') game.keys.left = true;
+    if (e.code === 'ArrowRight' || e.key === 'd' || e.key === 'D') game.keys.right = true;
+
+    if (e.code === 'Space') {
+      if (game.mode === 'PLAYING') {
+        e.preventDefault();
+        if (!e.repeat) {
+          if (game.stageIndex === 0) actionStage1();
+          else if (game.stageIndex === 2) actionStage3Tap();
+          else if (game.stageIndex === 3) actionStage4Fire();
+        }
+        game.keys.space = true;
+      }
+    }
+
+    if (game.mode === 'PLAYING' && game.stageIndex === 1 && !e.repeat) {
+      if (e.key === '1') actionStage2Lane(0);
+      else if (e.key === '2') actionStage2Lane(1);
+      else if (e.key === '3') actionStage2Lane(2);
+    }
+  });
+
+  window.addEventListener('keyup', (e) => {
+    if (e.code === 'ArrowLeft' || e.key === 'a' || e.key === 'A') game.keys.left = false;
+    if (e.code === 'ArrowRight' || e.key === 'd' || e.key === 'D') game.keys.right = false;
+    if (e.code === 'Space') game.keys.space = false;
+  });
+
+  /* --------------------------------------------------------------------------
+   * 13. 모달 & 난이도 선택 버튼 바인딩
+   * -------------------------------------------------------------------------- */
+  document.querySelectorAll('.diff-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const diffKey = btn.getAttribute('data-diff');
+      setDifficulty(diffKey, true);
+    });
+  });
+
+  function buildStageSelectGrid() {
+    ui.stageSelectGrid.innerHTML = '';
+    STAGES.forEach((st, idx) => {
+      const card = document.createElement('div');
+      card.className = 'bg-[#fffdf7] border-2 border-[#12151e] rounded-lg p-2.5 flex flex-col justify-between gap-2';
+      card.innerHTML = `
+        <div>
+          <div class="flex items-center justify-between gap-1 mb-1">
+            <span class="px-2 py-0.5 bg-[#d9383a] text-white rounded text-xs font-bold">제${st.id}전투</span>
+            <span class="text-xs text-[#b86f32] font-bold">${st.mechanicLabel}</span>
+          </div>
+          <h3 class="text-sm sm:text-base font-bold text-[#12151e]">${st.title}</h3>
+          <p class="text-[11px] sm:text-xs text-[#5c4f42] mt-0.5">${st.dateLocation}</p>
+        </div>
+        <button type="button" class="pixel-btn btn-gold rounded py-1.5 px-3 text-xs font-bold w-full">
+          이 전투 바로 플레이 ▶
+        </button>
+      `;
+      card.querySelector('button').addEventListener('click', () => {
+        audio.click();
+        if (game.mode === 'TITLE') game.score = 0;
+        startStage(idx);
+      });
+      ui.stageSelectGrid.appendChild(card);
+    });
+  }
+
+  function buildCodexList() {
+    ui.codexList.innerHTML = '';
+    CODEX_ENTRIES.forEach((item) => {
+      const box = document.createElement('div');
+      box.className = 'bg-[#fffdf7] border-2 border-[#12151e] rounded-lg p-2.5';
+      box.innerHTML = `
+        <div class="flex flex-wrap items-center justify-between gap-1 mb-1">
+          <strong class="text-xs sm:text-sm text-[#d9383a]">▪ ${item.term}</strong>
+          <span class="px-2 py-0.5 bg-[#e2d2b5] rounded text-[11px] text-[#12151e] font-bold">${item.tag}</span>
+        </div>
+        <p class="text-xs text-[#12151e]">${item.desc}</p>
+      `;
+      ui.codexList.appendChild(box);
+    });
+  }
+
+  document.getElementById('btnStartCampaign').addEventListener('click', () => {
+    audio.rally();
+    game.score = 0;
+    startStage(0);
+  });
+
+  document.getElementById('btnOpenStageSelect').addEventListener('click', () => {
+    audio.click();
+    ui.overlayStageSelect.classList.remove('hidden');
+  });
+
+  document.getElementById('btnCloseStageSelect').addEventListener('click', () => {
+    audio.click();
+    ui.overlayStageSelect.classList.add('hidden');
+  });
+
+  document.getElementById('btnOpenCodex').addEventListener('click', () => {
+    audio.click();
+    ui.overlayCodex.classList.remove('hidden');
+  });
+
+  document.getElementById('btnCloseCodex').addEventListener('click', () => {
+    audio.click();
+    ui.overlayCodex.classList.add('hidden');
+  });
+
+  ui.btnStageMenuTop.addEventListener('click', () => {
+    audio.click();
+    if (game.mode === 'TITLE') {
+      ui.overlayStageSelect.classList.remove('hidden');
+    } else {
+      goToTitle();
+    }
+  });
+
+  ui.btnMute.addEventListener('click', () => {
+    const isMuted = audio.toggleMute();
+    ui.btnMute.textContent = isMuted ? '🔇 음소거' : '🔊 소리켬';
+    if (!isMuted) audio.click();
+  });
+
+  ui.btnNextStage.addEventListener('click', () => {
+    audio.click();
+    if (game.stageIndex < STAGES.length - 1) {
+      startStage(game.stageIndex + 1);
+    } else {
+      showVictoryScreen();
+    }
+  });
+
+  document.getElementById('btnRetryStage').addEventListener('click', () => {
+    audio.click();
+    startStage(game.stageIndex);
+  });
+
+  document.getElementById('btnGameOverMenu').addEventListener('click', () => {
+    audio.click();
+    goToTitle();
+    ui.overlayStageSelect.classList.remove('hidden');
+  });
+
+  document.getElementById('btnRestartAll').addEventListener('click', () => {
+    audio.rally();
+    game.score = 0;
+    startStage(0);
+  });
+
+  document.getElementById('btnVictoryMenu').addEventListener('click', () => {
+    audio.click();
+    goToTitle();
+    ui.overlayStageSelect.classList.remove('hidden');
+  });
+
+  // 초기 부팅
+  window.addEventListener('load', () => {
+    buildStageSelectGrid();
+    buildCodexList();
+    setDifficulty('normal', false); // 기본 난이도: 보통
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load('16px DungGeunMo').catch(() => {});
+    }
+    requestAnimationFrame(gameLoop);
+  });
+})();
+</script>
+</body>
+</html>
